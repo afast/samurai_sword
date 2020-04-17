@@ -1,0 +1,17 @@
+# Read about fixtures at https://api.rubyonrails.org/classes/ActiveRecord/FixtureSet.html
+
+one:
+  num_players: 1
+  waiting_room: false
+  started: false
+  ended: false
+  deck: MyText
+  discarded: MyText
+
+two:
+  num_players: 1
+  waiting_room: false
+  started: false
+  ended: false
+  deck: MyText
+  discarded: MyText

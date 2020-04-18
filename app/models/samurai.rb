@@ -1,0 +1,3 @@
+class Samurai < Role
+
+end

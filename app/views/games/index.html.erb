@@ -1,0 +1,64 @@
+<table>
+  <tr>
+    <th>
+    </th>
+    <th>
+      Player 1
+    </th>
+    <th>
+      Player 2
+    </th>
+    <th>
+      Player 3
+    </th>
+    <th>
+      Player 4
+    </th>
+  </tr>
+  <tr>
+    <td> User # </td>
+    <td><%= @game.players[0].user %> </td>
+    <td><%= @game.players[1].user %> </td>
+    <td><%= @game.players[2].user %> </td>
+    <td><%= @game.players[3].user %> </td>
+  </tr>
+  <tr>
+    <td> Role</td>
+    <td><%= @game.players[0].role %> </td>
+    <td><%= @game.players[1].role %> </td>
+    <td><%= @game.players[2].role %> </td>
+    <td><%= @game.players[3].role %> </td>
+  </tr>
+  <tr>
+    <td> Character</td>
+    <td><%= @game.players[0].character %> </td>
+    <td><%= @game.players[1].character %> </td>
+    <td><%= @game.players[2].character %> </td>
+    <td><%= @game.players[3].character %> </td>
+  </tr>
+  <tr>
+    <td> Honor</td>
+    <td><%= @game.players[0].honor %> </td>
+    <td><%= @game.players[1].honor %> </td>
+    <td><%= @game.players[2].honor %> </td>
+    <td><%= @game.players[3].honor %> </td>
+  </tr>
+  <tr>
+    <td> Resistance</td>
+    <td><%= @game.players[0].resistance %> </td>
+    <td><%= @game.players[1].resistance %> </td>
+    <td><%= @game.players[2].resistance %> </td>
+    <td><%= @game.players[3].resistance %> </td>
+  </tr>
+</table>
+
+<table>
+  <% @game.deck.each do |card| %>
+    <tr>
+      <td><%= card.name %></td>
+      <td><%= card.type %></td>
+      <td><%= card.distance %></td>
+      <td><%= card.damage %></td>
+    </tr>
+  <% end %>
+</table>

@@ -1,0 +1,109 @@
+div.shuriken_token {
+  height: 20px;
+  width: 20px;
+  display: block;
+  background-size: contain;
+  background-image: image-url('shuriken_token.png')
+}
+
+div.heart_token {
+  height: 20px;
+  width: 20px;
+  display: block;
+  background-size: contain;
+  background-image: image-url('heart_token.png')
+}
+
+div.logged_in_player {
+  position: absolute;
+  bottom: 50px;
+  margin: 0 auto;
+  width: 99%;
+  text-align: center;
+}
+
+div.player {
+  display: inline-block;
+  border: 1px solid;
+  padding: 5px;
+  margin: 5px;
+  min-height: 188px;
+}
+
+div.player__info {
+  display: inline-block;
+  vertical-align: top;
+
+  .honor {
+    display: block;
+
+    .shuriken_token {
+      display: inline-block;
+    }
+  }
+
+  .resistance {
+    display: block;
+
+    .heart_token {
+      display: inline-block;
+    }
+  }
+}
+
+div.player-cards {
+  display: inline-block;
+
+  .card:hover {
+    margin-top: -50px;
+  }
+
+  .player-cards__role {
+    display: inline-block;
+  }
+
+  .player-cards__character {
+    display: inline-block;
+  }
+
+  .player-cards__actions {
+    display: inline-block;
+
+    .card {
+      display: inline-block;
+
+      &.hidden:not(:first-child) {
+        margin-left: -130px;
+      }
+    }
+  }
+
+  &--other {
+    div.player-cards__character {
+      display: inline-block;
+
+      .card:hover {
+	margin-bottom: -47px;
+      }
+    }
+
+    div.player-cards__actions.hidden {
+      display: inline-block;
+      margin-left: -33px;
+
+      .card {
+        display: inline-block;
+        height: 113px;
+        width: 77px;
+
+        &.hidden:not(:first-child) {
+          margin-left: -72px;
+        }
+      }
+    }
+  }
+}
+
+div.other_players {
+  text-align: center;
+}

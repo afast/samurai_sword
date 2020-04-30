@@ -1,0 +1,89 @@
+<table>
+  <tr>
+    <th>
+    </th>
+    <% @game.players.each_with_index do |p, i| %>
+      <th>
+        Player <%= i+1 %>
+      </th>
+    <% end %>
+  </tr>
+  <tr>
+    <td> User # </td>
+    <% @game.players.each do |p| %>
+      <td><%= p.user.username %> </td>
+    <% end %>
+  </tr>
+  <tr>
+    <td> Role</td>
+    <% @game.players.each do |p| %>
+      <td><%= p.role %> </td>
+    <% end %>
+  </tr>
+  <tr>
+    <td> Character</td>
+    <% @game.players.each do |p| %>
+      <td><%= p.character %> </td>
+    <% end %>
+  </tr>
+  <tr>
+    <td> Honor</td>
+    <% @game.players.each do |p| %>
+      <td><%= p.honor %> </td>
+    <% end %>
+  </tr>
+  <tr>
+    <td> Resistance</td>
+    <% @game.players.each do |p| %>
+      <td><%= p.resistance %> </td>
+    <% end %>
+  </tr>
+  <tr>
+    <td> Cards</td>
+    <% @game.players.each do |p| %>
+      <td><%= p.cards.collect(&:name).join('<br/>').html_safe %> </td>
+    <% end %>
+  </tr>
+</table>
+<span>
+  Hand: <%= @game.hand %>, Turn: <%= @game.turn %>
+</span>
+
+<div>
+<div class="data-grid">
+<h3>Deck (<%= @game.deck.size %>)</h3>
+<table>
+  <% @game.deck.each do |card| %>
+    <tr>
+      <td><%= card.name %></td>
+      <td><%= card.type %></td>
+      <td><%= card.distance %></td>
+      <td><%= card.damage %></td>
+    </tr>
+  <% end %>
+</table>
+</div>
+<div class="data-grid">
+<h3>Discarded (<%= @game.discarded.size %>)</h3>
+<table>
+  <% @game.discarded.each do |card| %>
+    <tr>
+      <td><%= card.name %></td>
+      <td><%= card.type %></td>
+      <td><%= card.distance %></td>
+      <td><%= card.damage %></td>
+    </tr>
+  <% end %>
+</table>
+</div>
+<div class="data-grid">
+  <table>
+    <tr>
+      <td><%= @game.current_state %></td>
+    </tr>
+    <tr>
+      <td><%= next_action(@game) %></td>
+    </tr>
+  </table>
+</div>
+</div>

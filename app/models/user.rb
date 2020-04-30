@@ -1,7 +1,6 @@
 class User < ApplicationRecord
-  include StripeSubscribable
+  devise :database_authenticatable, :registerable,
+         :recoverable, :rememberable, :validatable
 
-  devise :database_authenticatable,
-    :recoverable, :rememberable, :validatable
-
+  has_and_belongs_to_many :games
 end

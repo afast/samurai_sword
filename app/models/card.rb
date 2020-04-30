@@ -1,5 +1,8 @@
 class Card
-  TYPE = [:weapon, :property, :action]
+  WEAPON = :weapon
+  PROPERTY = :property
+  ACTION = :action
+  TYPE = [WEAPON, PROPERTY, ACTION]
   WEAPONS = [
     :bo, :bo, :bo, :bo, :bo, :bokken, :bokken, :bokken, :bokken, :bokken, :bokken,
     :daikyu, :kanabo, :katana, :kiseru,  :kiseru, :kiseru, :kiseru, :kiseru, :kusarigama, :kusarigama, :kusarigama, :kusarigama,

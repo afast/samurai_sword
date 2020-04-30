@@ -1,0 +1,24 @@
+.game_info {
+  top: calc(50% - 290px/2);
+  left: calc(50% - 390px/2);
+  position: absolute;
+
+  .card {
+    height: 113px;
+    width: 77px;
+  }
+}
+
+.deck {
+  margin: 10px;
+  display: inline-block;
+}
+
+.discarded {
+  margin: 10px;
+  display: inline-block;
+
+  .card:hover {
+    transform: scale(3);
+  }
+}

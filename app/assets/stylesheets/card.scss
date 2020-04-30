@@ -1,0 +1,310 @@
+div.card {
+  height: 160px;
+  width: 99px;
+  display: block;
+  margin: 5px;
+  background-position: -7px;
+  background-size: cover;
+  transition: all .5s ease;
+
+  &:hover {
+    transform: scale(2);
+  }
+
+  &.hidden {
+    background-image: image-url('carta_atras.png');
+    background-position: 0;
+
+    &:hover {
+      transform: none;
+    }
+  }
+
+  &.bo {
+    background-image: image-url('actions/bo.png')
+  }
+
+  &.kusarigama {
+    background-image: image-url('actions/kusarigama.png')
+  }
+
+  &.armadura {
+    background-image: image-url('actions/armadura.png')
+  }
+
+  &.ataque_simultaneo {
+    background-image: image-url('actions/ataque-simultaneo.png')
+  }
+
+  &.ayudante {
+    background-image: image-url('actions/ayudante.png')
+  }
+
+  &.bokken {
+    background-image: image-url('actions/bokken.png')
+  }
+
+  &.bushido {
+    background-image: image-url('actions/bushido.png')
+  }
+
+  &.campesino {
+    background-image: image-url('actions/campesino.png')
+  }
+
+  &.ceremonia_del_te {
+    background-image: image-url('actions/ceremonia_del_te.png')
+  }
+
+  &.chigiriki {
+    background-image: image-url('actions/chigiriki.png')
+  }
+
+  &.concentracion {
+    background-image: image-url('actions/concentracion.png')
+  }
+
+  &.contrataque {
+    background-image: image-url('actions/contrataque.png')
+  }
+
+  &.daikyu {
+    background-image: image-url('actions/daikyu.png')
+  }
+
+  &.daimio {
+    background-image: image-url('actions/daimio.png')
+  }
+
+  &.desenvainado_rapido {
+    background-image: image-url('actions/desenvainado_rapido.png')
+  }
+
+  &.distraccion {
+    background-image: image-url('actions/distraccion.png')
+  }
+
+  &.geisha {
+    background-image: image-url('actions/geisha.png')
+  }
+
+  &.grito_de_batalla {
+    background-image: image-url('actions/grito_de_batalla.png')
+  }
+
+  &.herida_sangrante {
+    background-image: image-url('actions/herida_sangrante.png')
+  }
+
+  &.imitacion {
+    background-image: image-url('actions/imitacion.png')
+  }
+
+  &.intuicion {
+    background-image: image-url('actions/intuicion.png')
+  }
+
+  &.jitte {
+    background-image: image-url('actions/jitte.png')
+  }
+
+  &.jiu_jitsu {
+    background-image: image-url('actions/jiu-jitsu.png')
+  }
+
+  &.kanabo {
+    background-image: image-url('actions/kanabo.png')
+  }
+
+  &.katana {
+    background-image: image-url('actions/katana.png')
+  }
+
+  &.kiseru {
+    background-image: image-url('actions/kiseru.png')
+  }
+
+  &.kote {
+    background-image: image-url('actions/kote.png')
+  }
+
+  &.kozuka {
+    background-image: image-url('actions/kozuka.png')
+  }
+
+  &.kusanagi {
+    background-image: image-url('actions/kusanagi.png')
+  }
+
+  &.makibishi {
+    background-image: image-url('actions/makibishi.png')
+  }
+
+  &.maldicion {
+    background-image: image-url('actions/maldicion.png')
+  }
+
+  &.manrikigusari {
+    background-image: image-url('actions/manrikigusari.png')
+  }
+
+  &.nagayari {
+    background-image: image-url('actions/nagayari.png')
+  }
+
+  &.naginata {
+    background-image: image-url('actions/naginata.png')
+  }
+
+  &.nodachi {
+    background-image: image-url('actions/nodachi.png')
+  }
+
+  &.parada {
+    background-image: image-url('actions/parada.png')
+  }
+
+  &.respiracion {
+    background-image: image-url('actions/respiracion.png')
+  }
+
+  &.shigehtoyumi {
+    background-image: image-url('actions/shigehtoyumi.png')
+  }
+
+  &.shuriken {
+    background-image: image-url('actions/shuriken.png')
+  }
+
+  &.tanegashima {
+    background-image: image-url('actions/tanegashima.png')
+  }
+
+  &.tanto {
+    background-image: image-url('actions/tanto.png')
+  }
+
+  &.tessen {
+    background-image: image-url('actions/tessen.png')
+  }
+
+  &.wakizashi {
+    background-image: image-url('actions/wakizashi.png')
+  }
+
+  &.zen {
+    background-image: image-url('actions/zen.png')
+  }
+
+  &.benkei {
+    background-image: image-url('characters/benkei.png')
+  }
+
+  &.bokuden {
+    background-image: image-url('characters/bokuden.png')
+  }
+
+  &.chiyome {
+    background-image: image-url('characters/chiyome.png')
+  }
+
+  &.damachacha {
+    background-image: image-url('characters/damachacha.png')
+  }
+
+  &.ginchiyo {
+    background-image: image-url('characters/ginchiyo.png')
+  }
+
+  &.goemon {
+    background-image: image-url('characters/goemon.png')
+  }
+
+  &.gracia {
+    background-image: image-url('characters/gracia.png')
+  }
+
+  &.hanzo {
+    background-image: image-url('characters/hanzo.png')
+  }
+
+  &.hideyoshi {
+    background-image: image-url('characters/hideyoshi.png')
+  }
+
+  &.ieyasu {
+    background-image: image-url('characters/ieyasu.png')
+  }
+
+  &.kanbei {
+    background-image: image-url('characters/kanbei.png')
+  }
+
+  &.kenshin {
+    background-image: image-url('characters/kenshin.png')
+  }
+
+  &.kojiro {
+    background-image: image-url('characters/kojiro.png')
+  }
+
+  &.masamune {
+    background-image: image-url('characters/masamune.png')
+  }
+
+  &.motonari {
+    background-image: image-url('characters/motonari.png')
+  }
+
+  &.musashi {
+    background-image: image-url('characters/musashi.png')
+  }
+
+  &.nobunaga {
+    background-image: image-url('characters/nobunaga.png')
+  }
+
+  &.okuni {
+    background-image: image-url('characters/okuni.png')
+  }
+
+  &.shima {
+    background-image: image-url('characters/shima.png')
+  }
+
+  &.shingen {
+    background-image: image-url('characters/shingen.png')
+  }
+
+  &.tomoe {
+    background-image: image-url('characters/tomoe.png')
+  }
+
+  &.ushiwaka {
+    background-image: image-url('characters/ushiwaka.png')
+  }
+
+  &.yoshihiro {
+    background-image: image-url('characters/yoshihiro.png')
+  }
+
+  &.yukimura {
+    background-image: image-url('characters/yukimura.png')
+  }
+
+  &.ninja {
+    background-image: image-url('roles/ninja.png')
+  }
+
+  &.ronin {
+    background-image: image-url('roles/ronin.png')
+  }
+
+  &.samurai {
+    background-image: image-url('roles/samurai.png')
+  }
+
+  &.shogun {
+    background-image: image-url('roles/shogun.png')
+  }
+}

@@ -12,4 +12,8 @@ class Character
   def to_s
     self.class.to_s
   end
+
+  def as_json
+    to_s.downcase
+  end
 end

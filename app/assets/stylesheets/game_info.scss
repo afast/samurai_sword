@@ -1,7 +1,10 @@
+@import 'color';
+
 .game_info {
   top: calc(50% - 290px/2);
-  left: calc(50% - 390px/2);
+  left: calc(50% - 617px/2);
   position: absolute;
+  height: 168px;
 
   .card {
     height: 113px;
@@ -10,15 +13,47 @@
 }
 
 .deck {
-  margin: 10px;
+  margin-left: 10px;
   display: inline-block;
+
+  .card {
+    margin: 0;
+  }
 }
 
 .discarded {
-  margin: 10px;
+  margin: 5px;
   display: inline-block;
 
+  .card {
+    width: 67px;
+    margin: 0;
+  }
   .card:hover {
     transform: scale(3);
+  }
+}
+
+.game_info__log {
+  display: inline-grid;
+  border: 1px solid;
+  height: 140px;
+  padding: 2px;
+  overflow-y: scroll;
+  width: 350px;
+
+  &__item {
+    font-size: 14px;
+
+    &__player {
+      margin-right: 3px;
+      color: $blueviolet;
+    }
+
+    &__message {
+      &--error { color: $deeppink; }
+      &--first { color: black; }
+      &--info { color: $kombugreen; }
+    }
   }
 }

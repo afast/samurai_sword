@@ -1,3 +1,5 @@
+@import 'color';
+
 div.shuriken_token {
   height: 20px;
   width: 20px;
@@ -28,6 +30,22 @@ div.player {
   padding: 5px;
   margin: 5px;
   min-height: 188px;
+
+  &__turn {
+    border: 3px solid $blueviolet;
+  }
+
+  &--pending_answer {
+    border: 3px solid $lightpink;
+  }
+
+  &__visible_cards {
+    display: inline-block;
+
+    .card {
+      display: inline-block;
+    }
+  }
 }
 
 div.player__info {
@@ -68,6 +86,12 @@ div.player-cards {
 
   .player-cards__actions {
     display: inline-block;
+    //overflow-x: scroll;
+    //overflow-y: hidden;
+    white-space: nowrap;
+    height: 113px;
+    min-width: 109px;
+    width: calc(100% - 160px);
 
     .card {
       display: inline-block;
@@ -87,9 +111,12 @@ div.player-cards {
       }
     }
 
+    .player-cards__role {
+      display: inline-block;
+    }
+
     div.player-cards__actions.hidden {
       display: inline-block;
-      margin-left: -33px;
 
       .card {
         display: inline-block;
@@ -106,4 +133,33 @@ div.player-cards {
 
 div.other_players {
   text-align: center;
+
+  .player {
+    min-height: 0px;
+  }
+
+  .player--first-child {
+    float: left;
+    position: relative;
+    top: 220px;
+  }
+  .player--last-child {
+    float: right;
+    position: relative;
+    top: 220px;
+  }
+
+  .player__visible_cards {
+    .card {
+      display: inline-block;
+    }
+
+    .card:hover {
+      margin-top: -80px;
+    }
+  }
+}
+
+div.player__respond div {
+  display: inline;
 }

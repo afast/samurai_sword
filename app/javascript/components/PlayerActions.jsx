@@ -75,7 +75,7 @@ const PhaseThree = ({handleEndTurn}) => {
 const PhaseFour = ({handleDiscardCards}) => {
   return (
     <div>
-      <button onClick={handleDiscardCards}>Descartar Cartas Automaticamente</button>
+      <span>Please discard cards, max allowed is 7</span>
     </div>
   )
 }
@@ -110,7 +110,9 @@ PlayerActions.propTypes = {
 
 const mapStateToProps = (state) => {
   const { game } = state
-  return { game: game }
+  return { 
+    game: game,
+  }
 }
 
 const mapDispatchToProps = {

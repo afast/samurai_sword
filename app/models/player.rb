@@ -1,5 +1,5 @@
 class Player
-  attr_accessor :role, :character, :honor, :resistance, :user, :cards, :weapons_played
+  attr_accessor :role, :character, :honor, :resistance, :user, :cards, :weapons_played, :visible_cards
 
   def initialize(role, character, user, amount_players)
     raise "Error, player must have a valid role" unless role.is_a?(Role)
@@ -8,6 +8,7 @@ class Player
     @user = user
     @weapons_played = 0
     @character = character
+    @visible_cards = []
     initialize_honor(amount_players)
     reset_resistance
   end
@@ -24,16 +25,32 @@ class Player
     @resistance = initial_resistance if resistance.nil? || resistance.zero?
   end
 
+  def reset_resistance!
+    @resistance = initial_resistance
+  end
+
   def inoffensive
     cards.none? || resistance.zero?
+  end
+
+  def has_weapon?
+    cards.collect(&:weapon?).inject(:|)
   end
 
   def dead?
     @honor <= 0
   end
 
-  def take_damage(damage, from_player)
-    @resistance -= damage
+  def damage_modifier(defend_from=nil)
+    if (defend_from && defend_from.type == :weapon)
+      visible_cards.collect(&:damage_modifier).inject(0, :+)
+    else
+      0
+    end
+  end
+
+  def take_damage(damage, from_player, defend_from)
+    @resistance -= damage + from_player.damage_modifier(defend_from)
     if @resistance <= 0
       @resistance = 0
       @honor -= 1
@@ -50,11 +67,11 @@ class Player
   end
 
   def final_distance
-    1 # TODO: Add card effects here
+    1 + visible_cards.collect(&:distance_modifier).inject(0, :+)
   end
 
   def can_defend?
-    false # TODO Change to consider if player has stop card or special ability
+    cards.collect(&:name).include? :parada # TODO Change to consider if player has stop card or special ability
   end
 
   def reach_modifier
@@ -66,7 +83,7 @@ class Player
   end
 
   def can_play_weapon?
-    @weapons_played.zero? # TODO review special abilities
+    @weapons_played < (1 + visible_cards.collect(&:weapons_played_modifier).inject(0, :+))
   end
 
   def distance(start_index, end_index, game)
@@ -74,6 +91,8 @@ class Player
     total_players = game.players.size
     distance_a = 0
     distance_b = 0
+    final_distance = game.players[end_index].final_distance
+    reach_modifier = game.players[start_index].reach_modifier
 
     if end_index < start_index
       aux = start_index
@@ -93,6 +112,14 @@ class Player
     end
 
     distance = [distance_a, distance_b].min
-    distance + game.players[end_index].final_distance - game.players[start_index].reach_modifier
+    distance + final_distance - reach_modifier
+  end
+
+  def discard_card(card_name)
+    cards.delete_at(cards.index { |c| c.name.to_s == card_name.to_s })
+  end
+
+  def discard_stop_card
+    discard_card :parada
   end
 end

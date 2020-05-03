@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 2020_04_30_024016) do
+ActiveRecord::Schema.define(version: 2020_05_01_215649) do
 
   create_table "games", force: :cascade do |t|
     t.integer "num_players"
@@ -36,6 +36,10 @@ ActiveRecord::Schema.define(version: 2020_04_30_024016) do
     t.integer "ronin_points"
     t.string "winning_team"
     t.string "status"
+    t.text "pending_answer"
+    t.string "last_action"
+    t.text "last_error"
+    t.text "defend_from"
   end
 
   create_table "games_users", force: :cascade do |t|

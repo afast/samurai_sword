@@ -1,6 +1,6 @@
 div.card {
-  height: 160px;
-  width: 99px;
+  height: 113px;
+  width: 67px;
   display: block;
   margin: 5px;
   background-position: -7px;
@@ -8,7 +8,7 @@ div.card {
   transition: all .5s ease;
 
   &:hover {
-    transform: scale(2);
+    transform: scale(2.5);
   }
 
   &.hidden {
@@ -108,8 +108,8 @@ div.card {
     background-image: image-url('actions/jitte.png')
   }
 
-  &.jiu_jitsu {
-    background-image: image-url('actions/jiu-jitsu.png')
+  &.jiujitsu {
+    background-image: image-url('actions/jiujitsu.png')
   }
 
   &.kanabo {

@@ -12,7 +12,7 @@ class Card extends React.Component {
 
   handleClick () {
     console.log(this.props.phase)
-    if (this.props.phase == 3 && this.props.clickable && this.props.index >= 0 ) {
+    if (this.props.phase >= 3 && this.props.clickable && this.props.index >= 0 ) {
       this.props.wantsToPlay(this.props)
     } else {
       console.log('card not clickable')

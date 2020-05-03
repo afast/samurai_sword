@@ -1,9 +1,10 @@
 import React from 'react'
 import { connect } from 'react-redux'
-import ReactDOM from 'react-dom'
 import PropTypes from 'prop-types'
 import GameInfo from './GameInfo'
+import WaitingRoom from './WaitingRoom'
 import Player from './Player'
+import Card from './Card'
 import OtherPlayer from './OtherPlayer'
 
 class Game extends React.Component {
@@ -17,32 +18,47 @@ class Game extends React.Component {
       users,
       players,
       currentUser,
+      pendingAnswers,
       turn
     } = this.props;
 
-    let otherPlayers = [];
-    let currentPlayer = {};
+    const pendingAnswersIds = pendingAnswers && pendingAnswers.map( (p) => p.character ) || []
 
-    players.map( (p) => {
-      if (p.user.id == currentUser.id)
-        currentPlayer = p
-      else
-        otherPlayers.push(p)
-    } )
 
-    return(
-      <div>
-        <div className="other_players">
-          {otherPlayers.map((player, index) =>
-            <OtherPlayer role={player.role} character={player.character} cards={player.cards} honor={player.honor} resistance={player.resistance} visible={false} /> 
-          )}
+    if (game.status == 'WAITING')
+      return (<WaitingRoom />)
+    else {
+      let otherPlayers = [];
+      let currentPlayer = {};
+      let currentPlayerIndex = -1;
+
+      players.map( (p, i) => {
+        p.turn = players[turn].character == p.character
+        if (p.user.id == currentUser.id) {
+          currentPlayer = p
+          currentPlayerIndex = i
+        } else {
+          p.pendingAnswer = pendingAnswersIds.includes(p.character)
+        }
+      } )
+
+      otherPlayers = players.slice(0, currentPlayerIndex).reverse();
+      otherPlayers = otherPlayers.concat(players.slice(currentPlayerIndex + 1, players.length).reverse())
+
+      return(
+        <div>
+          <div className="other_players">
+            {otherPlayers.map((player, index) =>
+              <OtherPlayer key={index} {...player} firstChild={otherPlayers.length > 2 && index==0} lastChild={otherPlayers.length > 2 && index==otherPlayers.length-1} name={player.user.username} visible={false} /> 
+            )}
+          </div>
+          <GameInfo deckSize={this.props.game.deck.length} discardedSize={this.props.game.discarded.length} />
+          <div className="logged_in_player">
+            <Player playerturn={currentPlayer.turn} {...currentPlayer} visible={true} />
+          </div>
         </div>
-        <GameInfo deckSize={this.props.game.deck.length} discardedSize={this.props.game.discarded.length} />
-        <div className="logged_in_player">
-          <Player {...currentPlayer} visible={true} />
-        </div>
-      </div>
-    )
+      )
+    }
   }
 }
 
@@ -67,6 +83,7 @@ const mapStateToProps = (state) => {
     players: game.players,
     users: game.users,
     turn: game.turn,
+    pendingAnswers: game.pending_answer,
     currentUser: currentUser
   }
 }

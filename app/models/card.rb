@@ -88,14 +88,123 @@ class Card
       distance: 1,
       damage: 3,
       count: 1
+    },
+    armadura: {
+      type: :property,
+      distance: 0,
+      damage: 0,
+      count: 4
+    },
+    bushido: {
+      type: :property,
+      distance: 0,
+      damage: 0,
+      count: 2
+    },
+    concentracion: {
+      type: :property,
+      distance: 0,
+      damage: 0,
+      count: 6
+    },
+    desenvainado_rapido: {
+      type: :property,
+      distance: 0,
+      damage: 0,
+      count: 3
+    },
+    ceremonia_del_te: {
+      type: :action,
+      distance: 0,
+      damage: 0,
+      count: 4
+    },
+    daimio: {
+      type: :action,
+      distance: 0,
+      damage: 0,
+      count: 3
+    },
+    distraccion: {
+      type: :action,
+      distance: 0,
+      damage: 0,
+      count: 5
+    },
+    geisha: {
+      type: :action,
+      distance: 0,
+      damage: 0,
+      count: 6
+    },
+    grito_de_batalla: {
+      type: :action,
+      distance: 0,
+      damage: 1,
+      count: 4
+    },
+    jiujitsu: {
+      type: :action,
+      distance: 0,
+      damage: 1,
+      count: 3
+    },
+    respiracion: {
+      type: :action,
+      distance: 0,
+      damage: 0,
+      count: 3
+    },
+    parada: {
+      type: :action,
+      distance: 0,
+      damage: 0,
+      count: 15
     }
   }
 
   attr_accessor :type, :name, :distance, :damage
 
-  def self.initialize_weapons
-    WEAPONS.map do |w|
-      Card.new(w, CARDS[w])
+  def self.initialize_cards
+    cards = []
+    CARDS.map do |v, w|
+      w[:count].times { cards << Card.new(v, CARDS[v]) }
+    end
+    cards
+  end
+
+  def weapon?
+    @type == :weapon
+  end
+
+  def friendly_name
+    name.to_s.humanize + " (#{type})"
+  end
+
+  def damage_modifier
+    case name
+    when :desenvainado_rapido
+      1
+    else
+      0
+    end
+  end
+
+  def weapons_played_modifier
+    case name
+    when :concentracion
+      1
+    else
+      0
+    end
+  end
+
+  def distance_modifier
+    case name
+    when :armadura
+      1
+    else
+      0
     end
   end
 

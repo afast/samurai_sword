@@ -16,6 +16,7 @@ export const actionTypes = {
   LOAD_GAME: 'GET_GAME',
   LOAD_GAME_SUCCESS: 'LOAD_GAME_SUCCESS',
   WANTS_TO_PLAY: 'WANTS_TO_PLAY',
+  CLEAN_WANTS_TO_PLAY: 'CLEAN_WANTS_TO_PLAY',
   SET_CURRENT_USER: 'SET_CURRENT_USER',
   ACTION_FAILURE: 'ACTION_FAILURE'
 };
@@ -32,9 +33,9 @@ export const takeCards = (id) => (dispatch, getState) => {
     .catch(error => dispatch({type: actionTypes.ACTION_FAILURE, error}));
 };
 
-export const playCard = (player, card_name, target) => (dispatch, getState) => {
+export const playCard = (player, card_name, target, geisha) => (dispatch, getState) => {
   const game = getState().game;
-  api.playCard(game.id, player, card_name, target)
+  api.playCard(game.id, player, card_name, target, geisha)
     .then(data => dispatch({type: actionTypes.PLAY_CARD_SUCCESS, data}))
     .catch(error => dispatch({type: actionTypes.ACTION_FAILURE, error}));
 };
@@ -45,8 +46,8 @@ export const answerCard = (id) => (dispatch, getState) => {
     .catch(error => dispatch({type: actionTypes.ACTION_FAILURE, error}));
 };
 
-export const discardCard = (id) => (dispatch, getState) => {
-  api.discardCard(id)
+export const discardCard = (id, card_name) => (dispatch, getState) => {
+  api.discardCard(id, card_name)
     .then(data => dispatch({type: actionTypes.DISCARD_CARD_SUCCESS, data}))
     .catch(error => dispatch({type: actionTypes.ACTION_FAILURE, error}));
 };
@@ -75,6 +76,36 @@ export const wantsToPlay = (card) => {
   return {type: actionTypes.WANTS_TO_PLAY, data: card};
 }
 
+export const takeDamage = (gameId, character) => (dispatch, getState) => {
+  api.takeDamage(gameId, character)
+    .then(data => dispatch({type: actionTypes.LOAD_GAME_SUCCESS, data}))
+    .catch(error => dispatch({type: actionTypes.ACTION_FAILURE, error}));
+}
+
+export const playStop = (gameId, character) => (dispatch, getState) => {
+  api.playStop(gameId, character)
+    .then(data => dispatch({type: actionTypes.LOAD_GAME_SUCCESS, data}))
+    .catch(error => dispatch({type: actionTypes.ACTION_FAILURE, error}));
+}
+
+export const discardWeapon = (gameId, character, card_name) => (dispatch, getState) => {
+  api.discardWeapon(gameId, character, card_name)
+    .then(data => dispatch({type: actionTypes.DISCARD_CARD_SUCCESS, data}))
+    .catch(error => dispatch({type: actionTypes.ACTION_FAILURE, error}));
+}
+
+export const joinGame = (gameId) => (dispatch, getState) => {
+  api.joinGame(gameId)
+    .then(data => dispatch({type: actionTypes.LOAD_GAME_SUCCESS, data}))
+    .catch(error => dispatch({type: actionTypes.ACTION_FAILURE, error}));
+}
+
+export const startGame = (gameId) => (dispatch, getState) => {
+  api.startGame(gameId)
+    .then(data => dispatch({type: actionTypes.LOAD_GAME_SUCCESS, data}))
+    .catch(error => dispatch({type: actionTypes.ACTION_FAILURE, error}));
+}
+
 export default {
   recoverResistance,
   takeCards,
@@ -85,5 +116,10 @@ export default {
   loadGame,
   wantsToPlay,
   setCurrentUser,
-  loadGameSuccess
+  loadGameSuccess,
+  takeDamage,
+  playStop,
+  discardWeapon,
+  joinGame,
+  startGame,
 };

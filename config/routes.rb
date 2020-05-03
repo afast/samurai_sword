@@ -10,12 +10,17 @@ Rails.application.routes.draw do
       post :answer_card
       post :end_turn
       post :discard_cards
+      post :discard_card
       post :reset_resistance
       get :admin
       post :start
       post :join
+      post :take_damage
+      post :play_stop
+      post :discard_weapon
     end
   end
 
   resources :users
+  mount ActionCable.server, at: '/cable'
 end

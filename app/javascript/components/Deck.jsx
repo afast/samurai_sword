@@ -5,7 +5,7 @@ import Card from './Card'
 
 const Deck = props => (
   <div className="deck">
-    <span className="remaining">Deck: {props.size} cards</span>
+    <span className="remaining">{props.size} cards</span>
     <Card />
   </div>
 )

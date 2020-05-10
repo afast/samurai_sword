@@ -6,7 +6,7 @@ import Card from './Card'
 
 const Discarded = props => (
   <div className="discarded">
-    <span className="size">{props.size} cards</span>
+    <span className="size">{props.size}</span>
     { props.size == 0 && <Card /> }
     { props.size > 0 && props.topCard && <Card name={props.topCard.name} visible={true}/> }
   </div>

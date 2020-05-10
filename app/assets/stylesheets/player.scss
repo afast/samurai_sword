@@ -35,7 +35,7 @@ div.logged_in_player {
 
 
 @keyframes blink {
-   50% { border-color: $lightpink; }
+   50% { border-color: #d5ddbc; }
 }
 
 div.player {
@@ -247,7 +247,7 @@ div.other_players {
 }
 
 div.player__respond div {
-  display: inline;
+  display: block;
 }
 
 .card_animation-enter {

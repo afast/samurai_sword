@@ -12,6 +12,14 @@
   margin-left: 10px;
   display: inline-block;
 
+  .remaining {
+    position: relative;
+    top: 62px;
+    left: 25px;
+    color: white;
+    font-size: 20px;
+  }
+
   .card {
     margin: 0;
   }
@@ -20,6 +28,8 @@
 .discarded {
   margin: 5px;
   display: inline-block;
+  text-align: center;
+  color: white;
 
   .card {
     margin: 0;
@@ -47,9 +57,11 @@
   display: inline-block;
   width: 204px;
   margin-top: -100%;
-  background: #8A9B68;
-  border: solid 1px;
-  padding: 1px;
+  background: #937B63;
+  border: solid 1px #937B63;
+  padding: 2px;
+  border-radius: 5px;
+  box-sizing: border-box;
 }
 
 .game_info__log {
@@ -74,4 +86,12 @@
       &--info { color: $kombugreen; }
     }
   }
+}
+
+.game_end {
+    background: #d5ddbc;
+    position: relative;
+    display: block;
+    text-align: center;
+    z-index: 1;
 }

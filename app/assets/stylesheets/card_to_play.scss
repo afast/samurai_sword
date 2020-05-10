@@ -2,11 +2,11 @@
   float: right;
   margin: 5px 0 0 5px;
   display: inline-grid;
+  z-index: 2;
 }
 
 .game_info .card_to_play .card {
   display: inline-block;
-  width: 67px;
 
   &:hover {
     transform: scale(3);
@@ -15,6 +15,19 @@
 
 .card_to_play__player_list {
   display: inline-block;
+  max-height: 120px;
+  overflow: scroll;
+
+  &--geisha {
+    position: relative;
+    left: 90px;
+    top: -160px;
+
+    label {
+      display: block;
+    }
+  }
+
   label {
     display: block;
   }

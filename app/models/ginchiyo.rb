@@ -3,4 +3,12 @@ class Ginchiyo < Character
   def resistance
     4
   end
+
+  def final_damage(amount, type)
+    if amount > 1 && type == :weapon
+      amount - 1
+    else
+      amount
+    end
+  end
 end

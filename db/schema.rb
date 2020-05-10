@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 2020_05_01_215649) do
+ActiveRecord::Schema.define(version: 2020_05_03_063049) do
 
   create_table "games", force: :cascade do |t|
     t.integer "num_players"
@@ -40,6 +40,8 @@ ActiveRecord::Schema.define(version: 2020_05_01_215649) do
     t.string "last_action"
     t.text "last_error"
     t.text "defend_from"
+    t.boolean "resolve_bushido"
+    t.boolean "bushido_in_play"
   end
 
   create_table "games_users", force: :cascade do |t|

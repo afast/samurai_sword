@@ -1,42 +1,103 @@
 import React from 'react'
 import ReactDOM from 'react-dom'
+import { connect } from 'react-redux'
 import PropTypes from 'prop-types'
+import ReactCSSTransitionGroup from 'react-addons-css-transition-group'
 import Card from './Card'
+import PlayAlert from './PlayAlert'
 
-const OtherPlayer = props => (
-  <div className={`player ${props.turn ? 'player__turn' : (props.pendingAnswer ? 'player--pending_answer' : '')} ${props.firstChild ? 'player--first-child' : ''} ${props.lastChild ? 'player--last-child' : ''}`}>
-    <span>{props.name}</span>
-    <div className='player-cards--other'>
-      { props.role == 'shogun' && <div className='player-cards__role'>
-        <Card name={props.role} visible={true} />
-      </div> }
-      <div className='player-cards__character'>
-        <Card name={props.character} visible={true} />
-      </div>
+class OtherPlayer extends React.Component {
+  constructor(props) {
+    super(props);
+    this.state = { lostHonor: false, recoveredResistance: false,  lostResistance: false, cardRobbed: false };
+    this.resetState = this.resetState.bind(this)
+  }
+
+  componentDidUpdate(prevProps) {
+    if (prevProps.honor > this.props.honor) {
+      this.setState({lostHonor: true})
+    }
+    if (prevProps.resistance > this.props.resistance) {
+      this.setState({lostResistance: true})
+    }
+    if (prevProps.resistance < this.props.resistance) {
+      this.setState({recoveredResistance: true})
+    }
+    if (prevProps.cards.length > this.props.cards.length) {
+      this.setState({cardRobbed: true})
+    }
+    if (prevProps.visible_cards.length > this.props.visible_cards.length) {
+      this.setState({cardRobbed: true})
+    }
+  }
+
+  resetState(name) {
+    console.log('resetting state ' + name)
+    if (name === 'honor') {
+      this.setState({ lostHonor: false})
+    } else if (name === 'lostResistance') {
+      this.setState({lostResistance: false})
+    } else if (name === 'recoveredResistance') {
+      this.setState({recoveredResistance: false})
+    } else if (name === 'robbed') {
+      this.setState({cardRobbed: false})
+    }
+  }
+
+  render() {
+    const props = this.props;
+    const { character, discard_stop, discard_weapon, players, turn } = this.props;
+    console.log('card robbed state: ' + this.state.cardRobbed)
+    console.log('turn: ' + turn)
+    console.log('discard_stop: ' + discard_stop)
+    console.log('discard_weapon: ' + discard_weapon)
+    const cardRobbed = !turn && !discard_stop && !discard_weapon && this.state.cardRobbed
+    console.log('card Robbed: '+ cardRobbed)
+    const callbackFunction = () => { this.resetState() }
+
+    return (
+      <div className={`player ${props.turn ? 'player__turn' : (props.pendingAnswer ? 'player--pending_answer' : '')} ${props.firstChild ? 'player--first-child' : ''} ${props.lastChild ? 'player--last-child' : ''}`}>
       <div className='player__info'>
-        <div className='honor'>
-          <div className='shuriken_token'>
-          </div>
-          <span className='honor__amount'>{props.honor}</span>
-        </div>
-        <div className='resistance'>
-          <div className='heart_token'>
-          </div>
-          <span className='resistance__amount'>{props.resistance}</span>
-        </div>
+      <span className="player__info--other-name">{props.name}</span>
+      <div className='honor'>
+      <ReactCSSTransitionGroup transitionName="tokens" transitionEnterTimeout={3000} transitionLeaveTimeout={3000}>
+      { Array.from({length: props.honor}, () => <div className='shuriken_token' /> ) }
+      </ReactCSSTransitionGroup>
+      </div>
+      <div className='resistance'>
+      <ReactCSSTransitionGroup transitionName="tokens" transitionEnterTimeout={3000} transitionLeaveTimeout={3000}>
+      { Array.from({length: props.resistance}, () => <div className='heart_token' /> ) }
+      </ReactCSSTransitionGroup>
+      </div>
+      </div>
+      { this.state.lostHonor && <PlayAlert name='honor' callback={callbackFunction} /> }
+      { this.state.lostResistance && <PlayAlert name='lostResistance' callback={callbackFunction}  /> }
+      { cardRobbed && <PlayAlert name='robbed' callback={callbackFunction} /> }
+      { this.state.recoveredResistance && <PlayAlert name='recoveredResistance' callback={callbackFunction} /> }
+      <div className='player-cards--other'>
+      { (props.role == 'shogun' || props.gameEnded) && <div className='player-cards__role'>
+        <Card name={props.role} visible={true} />
+        </div> }
+      <div className='player-cards__character'>
+      <Card name={props.character} visible={true} />
       </div>
 
       <div className={'player-cards__actions ' + (props.visible ? '' : 'hidden')}>
-        {props.cards.map((card, index) =>
-          <Card key={index} name={card.name} visible={props.visible} />
-        )}
+      {props.cards.map((card, index) =>
+        <Card key={card.rkey} name={card.name} visible={props.visible} />
+      )}
+      { props.cards.length > 0 && <span className='player-cards__actions__amount'>{props.cards.length}</span> }
       </div>
-    </div>
-    <div className="player__visible_cards">
-      {props.visible_cards.map( (c, i) => <Card key={i} index={i} {...c} visible={true} clickable={false} />)}
-    </div>
-  </div>
-)
+      </div>
+      <div className="player__visible_cards">
+      <ReactCSSTransitionGroup transitionName="card_animation" transitionEnterTimeout={3000} transitionLeaveTimeout={3000}>
+      {props.visible_cards.map( (c, i) => <Card key={c.rkey} index={i} {...c} visible={true} clickable={false} />)}
+      </ReactCSSTransitionGroup>
+      </div>
+      </div>
+    )
+  }
+}
 
 OtherPlayer.defaultProps = {
   visible: false,
@@ -60,4 +121,13 @@ OtherPlayer.propTypes = {
   pendingAnswer: PropTypes.bool,
 }
 
-export default OtherPlayer
+const mapStateToProps = (state) => {
+  const { game } = state;
+  return {
+    players: game.players,
+    discard_stop: game.defend_from && (game.defend_from.type == 'weapon' || game.defend_from.name == 'grito_de_batalla') && !game.resolve_bushido,
+    discard_weapon: game.defend_from && game.defend_from.name == 'jiujitsu',
+  }
+}
+
+export default connect(mapStateToProps)(OtherPlayer)

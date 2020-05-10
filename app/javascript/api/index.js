@@ -10,6 +10,14 @@ export const takeCards = (id) => {
   return makeAuthenticatedRequest(`${API_URL}/games/${id}/take_cards.json`, { method: 'POST' })
 }
 
+export const ieyasuTakeCards = (id) => {
+  return makeAuthenticatedRequest(`${API_URL}/games/${id}/ieyasu_take_cards.json`, { method: 'POST' })
+}
+
+export const nobunagaTakeCard = (id) => {
+  return makeAuthenticatedRequest(`${API_URL}/games/${id}/nobunaga_take_card.json`, { method: 'POST' })
+}
+
 export const playCard = (id, player, card, target, geisha) => {
   return makeAuthenticatedRequest(`${API_URL}/games/${id}/play_card.json`, { method: 'POST', body: JSON.stringify({
     player: player.character,
@@ -31,6 +39,20 @@ export const discardCard = (id, card_name) => {
 
 export const discardWeapon = (id, character, card_name) => {
   return makeAuthenticatedRequest(`${API_URL}/games/${id}/discard_weapon.json`, { method: 'POST', body: JSON.stringify({
+    character: character,
+    card_name: card_name
+  }) })
+}
+
+export const hanzoAbility = (id, character, card_name) => {
+  return makeAuthenticatedRequest(`${API_URL}/games/${id}/hanzo_ability.json`, { method: 'POST', body: JSON.stringify({
+    character: character,
+    card_name: card_name
+  }) })
+}
+
+export const defendBushido = (id, character, card_name) => {
+  return makeAuthenticatedRequest(`${API_URL}/games/${id}/defend_bushido.json`, { method: 'POST', body: JSON.stringify({
     character: character,
     card_name: card_name
   }) })
@@ -67,6 +89,8 @@ export const startGame = (id) => {
 export default {
   recoverResistance,
   takeCards,
+  ieyasuTakeCards,
+  nobunagaTakeCard,
   playCard,
   answerCard,
   discardCard,
@@ -75,6 +99,8 @@ export default {
   playStop,
   takeDamage,
   discardWeapon,
+  defendBushido,
+  hanzoAbility,
   joinGame,
   startGame,
 }

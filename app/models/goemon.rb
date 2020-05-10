@@ -3,4 +3,8 @@ class Goemon < Character
   def resistance
     5
   end
+
+  def play_weapon_amount
+    2
+  end
 end

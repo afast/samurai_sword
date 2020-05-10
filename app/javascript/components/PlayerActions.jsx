@@ -2,47 +2,56 @@ import React from 'react'
 import { connect } from 'react-redux'
 import ReactDOM from 'react-dom'
 import PropTypes from 'prop-types'
-import {  recoverResistance, takeCards, discardCard, endTurn } from '../actions/game'
+import {  recoverResistance, ieyasuTakeCards, nobunagaTakeCard, takeCards, discardCard, endTurn } from '../actions/game'
 
 class PlayerActions extends React.Component {
   constructor(props) {
     super(props);
     this.handleResetResistance = this.handleResetResistance.bind(this);
     this.handleTakeCards = this.handleTakeCards.bind(this);
+    this.handleIeyasu = this.handleIeyasu.bind(this);
+    this.handleNobunaga = this.handleNobunaga.bind(this);
     this.handleEndTurn = this.handleEndTurn.bind(this);
     this.handleDiscardCards = this.handleDiscardCards.bind(this);
   }
 
   handleResetResistance () {
-    console.log('handleResetResistance')
     this.props.recoverResistance(this.props.game.id);
   }
 
   handleTakeCards () {
-    console.log('handleTakeCards')
     this.props.takeCards(this.props.game.id);
   }
 
+  handleIeyasu () {
+    this.props.ieyasuTakeCards(this.props.game.id);
+  }
+
+  handleNobunaga () {
+    this.props.nobunagaTakeCard(this.props.game.id); 
+  }
+
   handleEndTurn () {
-    console.log('handleEndTurn')
     this.props.endTurn(this.props.game.id);
   }
 
   handleDiscardCards () {
-    console.log('handleDiscardCards')
     this.props.discardCard(this.props.game.id);
   }
 
 
   render () {
-    const { phase } = this.props.game;
-    console.log(phase)
+    const { phase, resolve_bushido } = this.props.game;
+    const { character, resistance } = this.props;
+    const itsIeyasu = character == 'ieyasu';
+    const itsNobunaga = character == 'nobunaga' && resistance > 1;
     return (
       <div>
       { phase == 1 && <PhaseOne handleResetResistance={this.handleResetResistance} /> }
-      { phase == 2 && <PhaseTwo handleTakeCards={this.handleTakeCards} /> }
+      { phase == 2 && !resolve_bushido && <PhaseTwo handleTakeCards={this.handleTakeCards} ieyasu={itsIeyasu} handleIeyasu={this.handleIeyasu} /> }
       { phase == 3 && <PhaseThree handleEndTurn={this.handleEndTurn} /> }
       { phase == 4 && <PhaseFour handleDiscardCards={this.handleDiscardCards} /> }
+      { itsNobunaga && [2, 3].includes(phase) && <Nobunaga handleNobunaga={this.handleNobunaga} /> }
       </div>
     )
   }
@@ -56,9 +65,10 @@ const PhaseOne = ({handleResetResistance}) => {
   )
 }
 
-const PhaseTwo = ({handleTakeCards}) => {
+const PhaseTwo = ({handleTakeCards, ieyasu, handleIeyasu}) => {
   return (
     <div>
+      { ieyasu && <button onClick={handleIeyasu}>Robar descarte y mazo</button> }
       <button onClick={handleTakeCards}>Robar Cartas</button>
     </div>
   )
@@ -76,6 +86,14 @@ const PhaseFour = ({handleDiscardCards}) => {
   return (
     <div>
       <span>Please discard cards, max allowed is 7</span>
+    </div>
+  )
+}
+
+const Nobunaga = ({handleNobunaga}) => {
+  return (
+    <div>
+      <button onClick={handleNobunaga}>Robar Carta por 1 de daño</button>
     </div>
   )
 }
@@ -118,6 +136,8 @@ const mapStateToProps = (state) => {
 const mapDispatchToProps = {
   recoverResistance,
   takeCards,
+  ieyasuTakeCards,
+  nobunagaTakeCard,
   discardCard,
   endTurn
 }

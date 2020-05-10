@@ -3,30 +3,43 @@
 div.shuriken_token {
   height: 20px;
   width: 20px;
-  display: block;
+  display: inline-block;
+  vertical-align: text-bottom;
+  background-repeat: no-repeat;
   background-size: contain;
-  background-image: image-url('shuriken_token.png')
+  background-image: image-url('shuriken_token.png');
 }
 
 div.heart_token {
   height: 20px;
   width: 20px;
-  display: block;
+  display: inline-block;
+  vertical-align: text-bottom;
+  background-repeat: no-repeat;
   background-size: contain;
-  background-image: image-url('heart_token.png')
+  background-image: image-url('heart_token.png');
 }
 
 div.logged_in_player {
   position: absolute;
-  bottom: 50px;
+  bottom: 0px;
   margin: 0 auto;
   width: 99%;
   text-align: center;
+
+  .player__visible_cards {
+    display: block;
+    min-height: 70px;
+  }
+}
+
+
+@keyframes blink {
+   50% { border-color: $lightpink; }
 }
 
 div.player {
   display: inline-block;
-  border: 1px solid;
   padding: 5px;
   margin: 5px;
   min-height: 188px;
@@ -36,7 +49,8 @@ div.player {
   }
 
   &--pending_answer {
-    border: 3px solid $lightpink;
+    border: 3px solid #8A9B68;
+    animation: blink .5s step-end infinite alternate;
   }
 
   &__visible_cards {
@@ -46,14 +60,20 @@ div.player {
       display: inline-block;
     }
   }
+
 }
 
 div.player__info {
   display: inline-block;
   vertical-align: top;
 
+  span.player__info--other-name {
+    display: inline-block;
+    margin-right: 5px;
+  }
+
   .honor {
-    display: block;
+    display: inline-block;
 
     .shuriken_token {
       display: inline-block;
@@ -61,16 +81,58 @@ div.player__info {
   }
 
   .resistance {
-    display: block;
+    display: inline-block;
+    margin-left: 5px;
 
     .heart_token {
       display: inline-block;
     }
   }
+
+  &--current {
+    .honor {
+      vertical-align: top;
+
+      .shuriken_token {
+        display: block;
+      }
+    }
+
+    .resistance {
+      vertical-align: top;
+
+      .heart_token {
+        display: block;
+      }
+    }
+  }
+}
+
+.tokens-enter {
+  opacity: 0.01;
+  width: 0px;
+}
+
+.tokens-enter.tokens-enter-active {
+  opacity: 1;
+  width: 20px;
+  transition: 3000ms;
+}
+
+.tokens-leave {
+  opacity: 1;
+  width: 20px;
+}
+
+.tokens-leave.tokens-leave-active {
+  opacity: 0.01;
+  width: 0px;
+  transition: 3000ms;
 }
 
 div.player-cards {
   display: inline-block;
+  margin-bottom: 50px;
 
   .card:hover {
     margin-top: -50px;
@@ -86,12 +148,10 @@ div.player-cards {
 
   .player-cards__actions {
     display: inline-block;
-    //overflow-x: scroll;
-    //overflow-y: hidden;
     white-space: nowrap;
-    height: 113px;
+    max-height: 113px;
     min-width: 109px;
-    width: calc(100% - 160px);
+    width: calc(100% - 170px);
 
     .card {
       display: inline-block;
@@ -103,6 +163,8 @@ div.player-cards {
   }
 
   &--other {
+    display: inline-block;
+
     div.player-cards__character {
       display: inline-block;
 
@@ -117,15 +179,30 @@ div.player-cards {
 
     div.player-cards__actions.hidden {
       display: inline-block;
+      vertical-align: top;
 
       .card {
         display: inline-block;
-        height: 113px;
-        width: 77px;
 
         &.hidden:not(:first-child) {
           margin-left: -72px;
         }
+
+      }
+
+      .card.daimio {
+        margin-left: -60px;
+        margin-right: 60px;
+      }
+
+      .player-cards__actions__amount {
+        position: relative;
+        left: -36px;
+        top: 44px;
+        color: white;
+        font-size: 20px;
+        float: right;
+        margin-left: -10px;
       }
     }
   }
@@ -142,16 +219,25 @@ div.other_players {
     float: left;
     position: relative;
     top: 220px;
+
+    .player__visible_cards { display: block; }
   }
+
   .player--last-child {
     float: right;
     position: relative;
     top: 220px;
+
+    .player__visible_cards { display: block; }
   }
+
+  .player__info { display: block; }
 
   .player__visible_cards {
     .card {
       display: inline-block;
+
+      &:not(:first-child) { margin-left: -40px; }
     }
 
     .card:hover {
@@ -162,4 +248,32 @@ div.other_players {
 
 div.player__respond div {
   display: inline;
+}
+
+.card_animation-enter {
+  opacity: 0.01;
+  width: 0px;
+}
+
+.card_animation-enter.card_animation-enter-active {
+  opacity: 1;
+  width: 72px;
+  transition: 3000ms;
+}
+
+.card_animation-leave {
+  opacity: 1;
+  width: 72px;
+}
+
+.card_animation-leave.card_animation-leave-active {
+  opacity: 0.01;
+  width: 0px;
+  transition: 3000ms;
+}
+
+div.player__actions {
+  display: inline-block;
+  float: right;
+  margin-bottom: 20px;
 }

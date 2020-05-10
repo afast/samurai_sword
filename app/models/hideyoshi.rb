@@ -3,4 +3,8 @@ class Hideyoshi < Character
   def resistance
     4
   end
+
+  def draw_card_amount
+    3
+  end
 end

@@ -163,12 +163,12 @@ class Card
     }
   }
 
-  attr_accessor :type, :name, :distance, :damage
+  attr_accessor :type, :name, :distance, :damage, :rkey
 
   def self.initialize_cards
     cards = []
     CARDS.map do |v, w|
-      w[:count].times { cards << Card.new(v, CARDS[v]) }
+      w[:count].times { |i| cards << Card.new(v, CARDS[v], i) }
     end
     cards
   end
@@ -208,10 +208,15 @@ class Card
     end
   end
 
-  def initialize(name, attrs)
+  def bushido?
+    name == :bushido
+  end
+
+  def initialize(name, attrs, index)
     @name = name
     @type = attrs[:type]
     @distance = attrs[:distance]
     @damage = attrs[:damage]
+    @rkey = "#{name}#{index}"
   end
 end

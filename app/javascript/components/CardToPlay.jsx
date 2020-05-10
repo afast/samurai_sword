@@ -12,18 +12,18 @@ class CardToPlay extends React.Component {
     this.onChangeRadio = this.onChangeRadio.bind(this);
     this.handleDiscardCard = this.handleDiscardCard.bind(this);
     this.onChangeWhatCard = this.onChangeWhatCard.bind(this);
-    this.state = { value: this.props.otherPlayers[0].character, availableCards: [], what_card: null }
+    this.state = { value: this.props.otherPlayers[0].character, what_card: null }
   }
 
   onChangeRadio(e) {
-    this.setState({ value: e.target.value })
-    let currentPlayer = {};
+    let player = {};
 
-    players.map( (p) => {
-      if (p.user.id == currentUser.id)
-        currentPlayer = p
+    this.props.otherPlayers.map( (p) => {
+      if (p.character == e.target.value)
+        player = p
     } )
-    this.setState({ availableCards: currentPlayer.visible_cards })
+
+    this.setState({ value: e.target.value })
   }
 
   onChangeWhatCard(e) {
@@ -38,22 +38,28 @@ class CardToPlay extends React.Component {
       myTurn,
     } = this.props
 
-    const cardsRequiringSelection = ['respiracion', 'distraccion', 'geisha']
+    const cardsRequiringSelection = ['respiracion', 'distraccion', 'geisha', 'bushido']
 
     const requiresPlayerSelection = myTurn && (pending_card.type == 'weapon' || cardsRequiringSelection.includes(pending_card.name))
 
-    if (!requiresPlayerSelection || this.state.value)
+    if (!requiresPlayerSelection || this.state.value) {
       playCard(turnPlayer, pending_card, this.state.value, this.state.what_card)
+      this.setState({value: null })
+    }
   }
 
   handleDiscardCard() {
-    console.log(this.props.game_id)
-    console.log(this.props.pending_card.name)
     this.props.discardCard(this.props.game_id, this.props.pending_card.name)
   }
 
   componentDidMount() {
-    this.setState({ value: null });
+    let player = {}
+    this.props.players.map( (p) => {
+      if (p.user.id == this.state.value)
+        player = p
+    } )
+
+    this.setState({ value: this.state.value });
   }
 
   render () {
@@ -68,42 +74,45 @@ class CardToPlay extends React.Component {
     } = this.props
 
     let currentPlayer = {};
+    let player = {};
 
     players.map( (p) => {
       if (p.user.id == currentUser.id)
         currentPlayer = p
+      if (p.character == this.state.value)
+        player = p
     } )
 
     const myTurn = currentPlayer.character == turnPlayer.character
-    const cardsRequiringSelection = ['respiracion', 'distraccion', 'geisha']
+    const cardsRequiringSelection = ['respiracion', 'distraccion', 'geisha', 'bushido']
     const requiresPlayerSelection = myTurn && (pending_card.type == 'weapon' || cardsRequiringSelection.includes(pending_card.name))
-    console.log(pending_card)
 
     return (
       <div className='card_to_play'>
         { pending_card.name && <Card name={pending_card.name} visible={true} /> }
         { phase == 3 && requiresPlayerSelection && <div className='card_to_play__player_list'>
-          { otherPlayers.map( (player) =>
-            <label>
-              <input type="radio" checked={this.state.value == player.character} name="target" value={player.character} onChange={this.onChangeRadio}/>
+          { otherPlayers.map( (player, i) =>
+            <label key={`otherplayerlabel-${i}`}>
+              <input key={`otherplayer-${i}`} type="radio" checked={this.state.value == player.character} name="target" value={player.character} onChange={this.onChangeRadio}/>
               {player.user.username}
             </label>
           ) }
-          { pending_card.name == 'geisha' && <div>
+          
+        </div>}
+        { phase == 3 && myTurn && pending_card.name && <button onClick={this.handlePlayCard}>Jugar Carta</button> }
+        { phase == 3 && requiresPlayerSelection && pending_card.name == 'geisha' && <div className='card_to_play__player_list--geisha'>
             <span>Descartar de:</span>
             <label>
               <input type="radio" checked={this.state.what_card=='from_hand'} name="what_card" value="from_hand" onChange={this.onChangeWhatCard} />
               De la Mano
             </label>
-            { this.state.availableCards.map( (c, i) => 
-              <label>
-                <input key={i} type="radio" checked={this.state.what_card == c.name} name="what_card" value={c.name} onChange={this.onChangeWhatCard}/>
-                {c.name}
+            { player && player.visible_cards && [...new Set(player.visible_cards.map((c) => c.name))].map( (name, i) => 
+              <label key={`whatlabel-${i}`}>
+                <input key={`whatinput-${i}`} type="radio" checked={this.state.what_card == name} name="what_card" value={name} onChange={this.onChangeWhatCard}/>
+                {name}
               </label>
             ) }
           </div>}
-        </div>}
-        { phase == 3 && myTurn && pending_card.name && <button onClick={this.handlePlayCard}>Jugar Carta</button> }
         { pending_card.name && phase == 4 && <div className='card_to_play__discard'>
             <button onClick={this.handleDiscardCard}>Descartar Carta</button>
         </div>}

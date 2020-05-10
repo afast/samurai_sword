@@ -4,7 +4,7 @@ class Benkei < Character
     5
   end
 
-  def base_distance
-    2
+  def distance_modifier
+    1
   end
 end

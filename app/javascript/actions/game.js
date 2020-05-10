@@ -33,6 +33,18 @@ export const takeCards = (id) => (dispatch, getState) => {
     .catch(error => dispatch({type: actionTypes.ACTION_FAILURE, error}));
 };
 
+export const ieyasuTakeCards = (id) => (dispatch, getState) => {
+  api.ieyasuTakeCards(id)
+    .then(data => dispatch({type: actionTypes.TAKE_CARDS_SUCCESS, data}))
+    .catch(error => dispatch({type: actionTypes.ACTION_FAILURE, error}));
+};
+
+export const nobunagaTakeCard = (id) => (dispatch, getState) => {
+  api.nobunagaTakeCard(id)
+    .then(data => dispatch({type: actionTypes.TAKE_CARDS_SUCCESS, data}))
+    .catch(error => dispatch({type: actionTypes.ACTION_FAILURE, error}));
+};
+
 export const playCard = (player, card_name, target, geisha) => (dispatch, getState) => {
   const game = getState().game;
   api.playCard(game.id, player, card_name, target, geisha)
@@ -84,12 +96,24 @@ export const takeDamage = (gameId, character) => (dispatch, getState) => {
 
 export const playStop = (gameId, character) => (dispatch, getState) => {
   api.playStop(gameId, character)
-    .then(data => dispatch({type: actionTypes.LOAD_GAME_SUCCESS, data}))
+    .then(data => dispatch({type: actionTypes.DISCARD_CARD_SUCCESS, data}))
     .catch(error => dispatch({type: actionTypes.ACTION_FAILURE, error}));
 }
 
 export const discardWeapon = (gameId, character, card_name) => (dispatch, getState) => {
   api.discardWeapon(gameId, character, card_name)
+    .then(data => dispatch({type: actionTypes.DISCARD_CARD_SUCCESS, data}))
+    .catch(error => dispatch({type: actionTypes.ACTION_FAILURE, error}));
+}
+
+export const defendBushido = (gameId, character, card_name) => (dispatch, getState) => {
+  api.defendBushido(gameId, character, card_name)
+    .then(data => dispatch({type: actionTypes.DISCARD_CARD_SUCCESS, data}))
+    .catch(error => dispatch({type: actionTypes.ACTION_FAILURE, error}));
+}
+
+export const hanzoAbility = (gameId, character, card_name) => (dispatch, getState) => {
+  api.hanzoAbility(gameId, character, card_name)
     .then(data => dispatch({type: actionTypes.DISCARD_CARD_SUCCESS, data}))
     .catch(error => dispatch({type: actionTypes.ACTION_FAILURE, error}));
 }
@@ -109,6 +133,8 @@ export const startGame = (gameId) => (dispatch, getState) => {
 export default {
   recoverResistance,
   takeCards,
+  ieyasuTakeCards,
+  nobunagaTakeCard,
   playCard,
   answerCard,
   discardCard,
@@ -120,6 +146,8 @@ export default {
   takeDamage,
   playStop,
   discardWeapon,
+  defendBushido,
+  hanzoAbility,
   joinGame,
   startGame,
 };

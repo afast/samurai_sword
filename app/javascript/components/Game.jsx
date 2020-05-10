@@ -6,6 +6,7 @@ import WaitingRoom from './WaitingRoom'
 import Player from './Player'
 import Card from './Card'
 import OtherPlayer from './OtherPlayer'
+import BushidoAlert from './BushidoAlert'
 
 class Game extends React.Component {
   constructor(props) {
@@ -18,6 +19,7 @@ class Game extends React.Component {
       users,
       players,
       currentUser,
+      bushidoAlert,
       pendingAnswers,
       turn
     } = this.props;
@@ -46,16 +48,17 @@ class Game extends React.Component {
       otherPlayers = otherPlayers.concat(players.slice(currentPlayerIndex + 1, players.length).reverse())
 
       return(
-        <div>
+        <div className="game">
           <div className="other_players">
             {otherPlayers.map((player, index) =>
-              <OtherPlayer key={index} {...player} firstChild={otherPlayers.length > 2 && index==0} lastChild={otherPlayers.length > 2 && index==otherPlayers.length-1} name={player.user.username} visible={false} /> 
+              <OtherPlayer key={index} {...player} gameEnded={game.game_ended}firstChild={otherPlayers.length > 2 && index==0} lastChild={otherPlayers.length > 2 && index==otherPlayers.length-1} name={player.user.username} visible={false} /> 
             )}
           </div>
           <GameInfo deckSize={this.props.game.deck.length} discardedSize={this.props.game.discarded.length} />
           <div className="logged_in_player">
             <Player playerturn={currentPlayer.turn} {...currentPlayer} visible={true} />
           </div>
+          { bushidoAlert && <BushidoAlert /> }
         </div>
       )
     }
@@ -84,6 +87,7 @@ const mapStateToProps = (state) => {
     users: game.users,
     turn: game.turn,
     pendingAnswers: game.pending_answer,
+    bushidoAlert: game.bushido_in_play,
     currentUser: currentUser
   }
 }

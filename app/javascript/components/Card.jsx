@@ -11,17 +11,21 @@ class Card extends React.Component {
   }
 
   handleClick () {
-    console.log(this.props.phase)
-    if (this.props.phase >= 3 && this.props.clickable && this.props.index >= 0 ) {
+    const { phase, resolveBushido, clickable, index } = this.props;
+    if ((phase >= 3 || resolveBushido) && clickable && index >= 0 ) {
       this.props.wantsToPlay(this.props)
-    } else {
-      console.log('card not clickable')
     }
   }
 
   render () {
+    let card_visible = this.props.visible;
+    const { gameEnded, name } = this.props;
+    if (gameEnded && name == 'daimio') {
+      card_visible = true
+    }
+
     return (
-      <div className={'card ' + (this.props.visible ? this.props.name :  'hidden')} onClick={this.handleClick}>
+      <div className={'card ' + (card_visible ? name :  'hidden')} onClick={this.handleClick}>
       </div>
     )
   }
@@ -45,7 +49,11 @@ Card.propTypes = {
 }
 
 const mapStateToProps = (state) => {
-  return { phase: state.game.phase }
+  return { 
+    phase: state.game.phase,
+    resolveBushido: state.game.resolve_bushido,
+    gameEnded: state.game.game_ended,
+  }
 }
 
 const mapActionsToProps = { wantsToPlay }

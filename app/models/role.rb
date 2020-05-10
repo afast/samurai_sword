@@ -7,7 +7,11 @@ class Role
     if amount_players > 5
       4
     else
-      3
+      if amount_players == 3 and self.is_a?(Shogun)
+        6
+      else
+        3
+      end
     end
   end
 

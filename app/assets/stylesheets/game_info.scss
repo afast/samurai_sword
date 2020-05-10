@@ -1,15 +1,11 @@
 @import 'color';
 
 .game_info {
-  top: calc(50% - 290px/2);
+  top: calc(50% - 168px/2);
   left: calc(50% - 617px/2);
   position: absolute;
   height: 168px;
 
-  .card {
-    height: 113px;
-    width: 77px;
-  }
 }
 
 .deck {
@@ -26,12 +22,34 @@
   display: inline-block;
 
   .card {
-    width: 67px;
     margin: 0;
   }
   .card:hover {
     transform: scale(3);
   }
+}
+
+.game_info__log--parent {
+  display: inline-block;
+}
+
+.game_info__log__current_card {
+  display: inline-block;
+  position: relative;
+  left: -255px;
+  z-index: 1;
+  transform: scale(1.5);
+  margin-right: -210px;
+}
+
+.game_info__log__current_card__log {
+  font-size: 10px;
+  display: inline-block;
+  width: 204px;
+  margin-top: -100%;
+  background: #8A9B68;
+  border: solid 1px;
+  padding: 1px;
 }
 
 .game_info__log {

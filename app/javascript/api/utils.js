@@ -16,11 +16,7 @@ export const makeRequest = (url, options = {}) => {
 };
 
 export const makeAuthenticatedRequest = (url, options = {}) => {
-  //const state = store.getState();
-
   options.headers = options.headers || {};
-  //options.headers['X-Auth-Email'] = get(state, 'user.user.email');
-  //options.headers['X-Auth-Token'] = get(state, 'user.user.authentication_token');
 
   return makeRequest(url, options);
 };

@@ -48,7 +48,7 @@ const mapStateToProps = (state) => {
     game_ended: game.game_ended,
     winningTeam: game.winning_team,
     action: game.last_action,
-    error: game.last_error
+    error: game.last_error,
   }
 }
 

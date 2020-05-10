@@ -1,8 +1,40 @@
 class Character
   attr_reader :resistance
 
-  def base_distance
+  def distance_modifier
+    0
+  end
+
+  def can_be_hurt_by?(type)
+    [:weapon, :action].include?(type)
+  end
+
+  def final_damage(amount, type)
+    amount
+  end
+
+  def damage_modifier(type)
+    0
+  end
+
+  def draw_card_after_making_damage?(type)
+    false
+  end
+
+  def draw_card_after_receiving_damage?(type)
+    false
+  end
+
+  def play_weapon_amount
     1
+  end
+
+  def draw_card_amount
+    2
+  end
+
+  def reach_modifier
+    0
   end
 
   def resistance

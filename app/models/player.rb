@@ -41,21 +41,48 @@ class Player
     @honor <= 0
   end
 
+  def daimio_points
+    cards.select { |c| c.name == :daimio }.size
+  end
+
+  def has_bushido?
+    visible_cards.collect(&:name).include?(:bushido)
+  end
+
+  def discard_bushido
+    visible_cards.delete_at(visible_cards.index { |c| c.name == :bushido })
+  end
+
   def damage_modifier(defend_from=nil)
+    modifier = defend_from && character.damage_modifier(defend_from.type) || 0
     if (defend_from && defend_from.type == :weapon)
-      visible_cards.collect(&:damage_modifier).inject(0, :+)
-    else
-      0
+      modifier += visible_cards.collect(&:damage_modifier).inject(0, :+)
     end
+    modifier
+  end
+
+  def draw_card_after_making_damage?(type)
+    character.draw_card_after_making_damage?(type)
+  end
+
+  def draw_card_after_receiving_damage?(type)
+    character.draw_card_after_receiving_damage?(type)
+  end
+
+  def find_visible_card(card_name)
+    visible_cards.index { |c| c.name.to_s == card_name }
   end
 
   def take_damage(damage, from_player, defend_from)
-    @resistance -= damage + from_player.damage_modifier(defend_from)
+    return unless character.can_be_hurt_by?(defend_from.type)
+    previous_resistance = @resistance
+    @resistance -= character.final_damage(damage + from_player.damage_modifier(defend_from), defend_from.type)
     if @resistance <= 0
       @resistance = 0
       @honor -= 1
       from_player.honor += 1
     end
+    return previous_resistance > @resistance
   end
 
   def has_cards?
@@ -67,7 +94,7 @@ class Player
   end
 
   def final_distance
-    1 + visible_cards.collect(&:distance_modifier).inject(0, :+)
+    1 + character.distance_modifier + visible_cards.collect(&:distance_modifier).inject(0, :+)
   end
 
   def can_defend?
@@ -75,15 +102,28 @@ class Player
   end
 
   def reach_modifier
-    0 # TODO: Calculate cards that help player see others closer
+    character.reach_modifier
   end
 
   def cleanup_turn
     @weapons_played = 0
   end
 
-  def can_play_weapon?
-    @weapons_played < (1 + visible_cards.collect(&:weapons_played_modifier).inject(0, :+))
+  def can_play_weapon?(amount_players = 4)
+    special_rules_amount = amount_players == 3 && role.is_a?(Shogun) ? 1 : 0
+    @weapons_played < (character.play_weapon_amount + special_rules_amount + visible_cards.collect(&:weapons_played_modifier).inject(0, :+))
+  end
+
+  def samurai_team?
+    role.is_a?(Shogun) || role.is_a?(Samurai)
+  end
+
+  def ninja_team?
+    role.is_a? Ninja
+  end
+
+  def draw_card_amount
+    character.draw_card_amount
   end
 
   def distance(start_index, end_index, game)

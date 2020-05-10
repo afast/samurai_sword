@@ -18,6 +18,10 @@ Rails.application.routes.draw do
       post :take_damage
       post :play_stop
       post :discard_weapon
+      post :defend_bushido
+      post :hanzo_ability
+      post :ieyasu_take_cards
+      post :nobunaga_take_card
     end
   end
 

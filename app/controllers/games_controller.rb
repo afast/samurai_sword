@@ -13,7 +13,6 @@ class GamesController < ApplicationController
     @game = Rails.cache.fetch("game-#{params[:id]}", expires_in: 24.hours) do
       Game.find(params[:id])
     end
-    p @game.users
     respond_to do |format|
       format.html { render :show  }
       format.json { render json: @game }
@@ -34,7 +33,6 @@ class GamesController < ApplicationController
     end
     @game.start
     @game.save
-    p @game.users
     Rails.cache.write("game-#{@game.id}", @game, expires_in: 24.hours)
     GameChannel.broadcast_to(@game, @game)
 
@@ -47,7 +45,6 @@ class GamesController < ApplicationController
   def join
     @game = Game.find(params[:id])
     @game.users << current_user unless @game.users.include?(current_user)
-    p @game.users
 
     Rails.cache.write("game-#{@game.id}", @game, expires_in: 24.hours)
     GameChannel.broadcast_to(@game, @game)
@@ -80,7 +77,36 @@ class GamesController < ApplicationController
 
     raise "Error, wrong phase to take cards" unless @game.phase == 2
     @game.process_phase
-    p @game.users
+    Rails.cache.write("game-#{@game.id}", @game, expires_in: 24.hours)
+    GameChannel.broadcast_to(@game, @game)
+    respond_to do |format|
+      format.html { redirect_to admin_game_url(@game.id || 1) }
+      format.json { render json: @game }
+    end
+  end
+
+  def ieyasu_take_cards
+    @game = Rails.cache.fetch("game-#{params[:id]}", expires_in: 24.hours) do
+      Game.find(params[:id])
+    end
+
+    raise "Error, wrong phase to take cards" unless @game.phase == 2
+    @game.ieyasu_take_cards
+    Rails.cache.write("game-#{@game.id}", @game, expires_in: 24.hours)
+    GameChannel.broadcast_to(@game, @game)
+    respond_to do |format|
+      format.html { redirect_to admin_game_url(@game.id || 1) }
+      format.json { render json: @game }
+    end
+  end
+
+  def nobunaga_take_card
+    @game = Rails.cache.fetch("game-#{params[:id]}", expires_in: 24.hours) do
+      Game.find(params[:id])
+    end
+
+    raise "Error, wrong phase to take cards" unless [2,3].include?(@game.phase)
+    @game.nobunaga_take_card
     Rails.cache.write("game-#{@game.id}", @game, expires_in: 24.hours)
     GameChannel.broadcast_to(@game, @game)
     respond_to do |format|
@@ -95,8 +121,7 @@ class GamesController < ApplicationController
     end
 
     raise "Error, wrong phase to play cards" unless @game.phase == 3
-    @game.play_card(params[:player], params[:card], params[:target])
-    p @game.users
+    @game.play_card(params[:player], params[:card], params[:target], params[:geisha])
     Rails.cache.write("game-#{@game.id}", @game, expires_in: 24.hours)
     GameChannel.broadcast_to(@game, @game)
     respond_to do |format|
@@ -112,7 +137,6 @@ class GamesController < ApplicationController
 
     raise "Error, wrong phase to restore resistance" unless @game.phase == 1
     @game.process_phase
-    p @game.users
     Rails.cache.write("game-#{@game.id}", @game, expires_in: 24.hours)
     GameChannel.broadcast_to(@game, @game)
     respond_to do |format|
@@ -138,7 +162,6 @@ class GamesController < ApplicationController
     @game.process_phase
     @game.last_error = nil
     @game.last_action = nil
-    p @game.users
     Rails.cache.write("game-#{@game.id}", @game, expires_in: 24.hours)
     GameChannel.broadcast_to(@game, @game)
     respond_to do |format|
@@ -167,7 +190,6 @@ class GamesController < ApplicationController
     end
 
     raise "Error, wrong phase to take cards" unless @game.phase == 4
-    p @game.users
     @game.process_phase
     Rails.cache.write("game-#{@game.id}", @game, expires_in: 24.hours)
     GameChannel.broadcast_to(@game, @game)
@@ -181,7 +203,7 @@ class GamesController < ApplicationController
     @game = Rails.cache.fetch("game-#{params[:id]}", expires_in: 24.hours) do
       Game.find(params[:id])
     end
-    raise "Error, you're not waiting to respond" unless @game.pending_answer.map { |p| p.character.to_s.downcase }.include?(params[:character].downcase)
+    raise "Error, you're not waiting to respond" unless @game.resolve_bushido || @game.pending_answer.map { |p| p.character.to_s.downcase }.include?(params[:character].downcase)
     @game.take_damage(params[:character])
     Rails.cache.write("game-#{@game.id}", @game, expires_in: 24.hours)
     GameChannel.broadcast_to(@game, @game)
@@ -197,6 +219,34 @@ class GamesController < ApplicationController
     end
     raise "Error, you're not waiting to respond" unless @game.pending_answer.map { |p| p.character.to_s.downcase }.include?(params[:character].downcase)
     @game.play_stop(params[:character])
+    Rails.cache.write("game-#{@game.id}", @game, expires_in: 24.hours)
+    GameChannel.broadcast_to(@game, @game)
+    respond_to do |format|
+      format.html { redirect_to admin_game_url(@game.id || 1) }
+      format.json { render json: @game }
+    end
+  end
+
+  def defend_bushido
+    @game = Rails.cache.fetch("game-#{params[:id]}", expires_in: 24.hours) do
+      Game.find(params[:id])
+    end
+    raise "Error, does not need to defend from Bushido" unless @game.resolve_bushido
+    @game.defend_bushido(params[:card_name])
+    Rails.cache.write("game-#{@game.id}", @game, expires_in: 24.hours)
+    GameChannel.broadcast_to(@game, @game)
+    respond_to do |format|
+      format.html { redirect_to admin_game_url(@game.id || 1) }
+      format.json { render json: @game }
+    end
+  end
+
+  def hanzo_ability
+    @game = Rails.cache.fetch("game-#{params[:id]}", expires_in: 24.hours) do
+      Game.find(params[:id])
+    end
+    raise "Error, you're not waiting to respond" unless @game.pending_answer.map { |p| p.character.to_s.downcase }.include?(params[:character].downcase)
+    @game.hanzo_ability(params[:character], params[:card_name])
     Rails.cache.write("game-#{@game.id}", @game, expires_in: 24.hours)
     GameChannel.broadcast_to(@game, @game)
     respond_to do |format|

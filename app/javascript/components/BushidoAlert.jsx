@@ -4,6 +4,7 @@
 class PlayerAlert extends React.Component {
   componentDidMount() {
     const audioEl = document.getElementsByClassName("audio-element")[0]
+    audioEl.volume = 0.3
     audioEl.play()
   }
  

@@ -4,8 +4,12 @@ import PropTypes from 'prop-types'
 class PlayAlert extends React.Component {
   componentDidMount() {
     const audioEl = document.getElementsByClassName(`audio-element-${this.props.name}`)[0]
-    addEventListener('ended', this.props.callback, false);
-    setTimeout(() => this.props.callback.call(this.props.name), 10000)
+    const { name } = this.props
+    let timeoutTime = 2000;
+    if (name == 'bushido')
+      timeoutTime = 10000
+    setTimeout(() => this.props.callback(name), timeoutTime)
+    audioEl.volume = 0.5
     audioEl.currentTime = 0
     audioEl.play()
   }

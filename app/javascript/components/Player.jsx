@@ -33,7 +33,7 @@ class Player extends React.Component {
   }
 
   resetState(name) {
-    console.log('resetting state')
+    console.log('reset state name: ' + name)
     if (name === 'honor') {
       this.setState({ lostHonor: false})
     } else if (name === 'lostResistance') {
@@ -68,14 +68,9 @@ class Player extends React.Component {
     const waitingOnMyAnswer = !!pendingAnswers && pendingAnswers.includes(character)
     const waitingOnAnswer = !!pendingAnswers && pendingAnswers.length > 0
     const hanzoAbility = discard_stop && character == 'hanzo'
-    console.log('card robbed state: ' + this.state.cardRobbed)
-    console.log('myTurn: ' + myTurn)
-    console.log('discard_stop: ' + discard_stop)
-    console.log('discard_weapon: ' + discard_weapon)
     const cardRobbed = !myTurn && !discard_stop && !discard_weapon && this.state.cardRobbed
-    console.log('card Robbed: '+ cardRobbed)
 
-    const callbackFunction = () => { this.resetState() }
+    const callbackFunction = (name) => { this.resetState(name) }
 
     return ( <div className={`player ${this.props.playerturn ? 'player__turn' : (waitingOnMyAnswer ? 'player--pending_answer' : '')}`}>
         <div className="player__visible_cards">

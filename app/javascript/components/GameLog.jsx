@@ -35,7 +35,7 @@ GameLog.propTypes = {
 const mapStateToProps = (state) => {
   const { game } = state;
   return { 
-    log: game.log,
+    log: [...game.log],
     lastAction: game.last_action,
     defendFrom: game.defend_from,
     pendingAnswer: game.pending_answer && game.pending_answer.length > 0,

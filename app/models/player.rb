@@ -4,17 +4,17 @@ class Player
   def initialize(role, character, user, amount_players)
     raise "Error, player must have a valid role" unless role.is_a?(Role)
     raise "Error, player must have a valid character" unless character.is_a?(Character)
-    @role = role
-    @user = user
-    @weapons_played = 0
-    @character = character
-    @visible_cards = []
+    self.role = role
+    self.user = user
+    self.weapons_played = 0
+    self.character = character
+    self.visible_cards = []
     initialize_honor(amount_players)
     reset_resistance
   end
 
   def initialize_honor(amount_players)
-    @honor = role.initial_honor(amount_players)
+    self.honor = role.initial_honor(amount_players)
   end
 
   def initial_resistance
@@ -22,11 +22,11 @@ class Player
   end
 
   def reset_resistance
-    @resistance = initial_resistance if resistance.nil? || resistance.zero?
+    self.resistance = initial_resistance if resistance.nil? || resistance.zero?
   end
 
   def reset_resistance!
-    @resistance = initial_resistance
+    self.resistance = initial_resistance
   end
 
   def inoffensive
@@ -38,7 +38,7 @@ class Player
   end
 
   def dead?
-    @honor <= 0
+    self.honor <= 0
   end
 
   def daimio_points
@@ -75,14 +75,14 @@ class Player
 
   def take_damage(damage, from_player, defend_from)
     return unless character.can_be_hurt_by?(defend_from.type)
-    previous_resistance = @resistance
-    @resistance -= character.final_damage(damage + from_player.damage_modifier(defend_from), defend_from.type)
-    if @resistance <= 0
-      @resistance = 0
-      @honor -= 1
+    previous_resistance = self.resistance
+    self.resistance -= character.final_damage(damage + from_player.damage_modifier(defend_from), defend_from.type)
+    if self.resistance <= 0
+      self.resistance = 0
+      self.honor -= 1
       from_player.honor += 1
     end
-    return previous_resistance > @resistance
+    return previous_resistance > self.resistance
   end
 
   def has_cards?
@@ -106,12 +106,12 @@ class Player
   end
 
   def cleanup_turn
-    @weapons_played = 0
+    self.weapons_played = 0
   end
 
   def can_play_weapon?(amount_players = 4)
     special_rules_amount = amount_players == 3 && role.is_a?(Shogun) ? 1 : 0
-    @weapons_played < (character.play_weapon_amount + special_rules_amount + visible_cards.collect(&:weapons_played_modifier).inject(0, :+))
+    self.weapons_played < (character.play_weapon_amount + special_rules_amount + visible_cards.collect(&:weapons_played_modifier).inject(0, :+))
   end
 
   def samurai_team?

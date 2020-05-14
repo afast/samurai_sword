@@ -4,6 +4,7 @@ import { render } from 'react-dom'
 import { Provider } from 'react-redux'
 import {combineReducers} from 'redux'
 import Game from './Game'
+import GameExtension from './GameExtension'
 import {loadGame, loadGameSuccess, setCurrentUser} from '../actions/game'
 import store from '../store/index'
 import consumer from '../channels/consumer'
@@ -27,7 +28,8 @@ class App extends React.Component {
   render() {
     return (
       <Provider store={store}>
-        <Game store={store} />
+      { !this.props.game.extension && <Game store={store} />}
+      { this.props.game.extension && <GameExtension store={store} />}
       </Provider>
     );
   }

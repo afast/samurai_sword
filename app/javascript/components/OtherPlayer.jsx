@@ -32,7 +32,7 @@ class OtherPlayer extends React.Component {
   }
 
   resetState(name) {
-    console.log('resetting state ' + name)
+    console.log('reset state name: ' + name)
     if (name === 'honor') {
       this.setState({ lostHonor: false})
     } else if (name === 'lostResistance') {
@@ -47,13 +47,8 @@ class OtherPlayer extends React.Component {
   render() {
     const props = this.props;
     const { character, discard_stop, discard_weapon, players, turn } = this.props;
-    console.log('card robbed state: ' + this.state.cardRobbed)
-    console.log('turn: ' + turn)
-    console.log('discard_stop: ' + discard_stop)
-    console.log('discard_weapon: ' + discard_weapon)
     const cardRobbed = !turn && !discard_stop && !discard_weapon && this.state.cardRobbed
-    console.log('card Robbed: '+ cardRobbed)
-    const callbackFunction = () => { this.resetState() }
+    const callbackFunction = (name) => { this.resetState(name) }
 
     return (
       <div className={`player ${props.turn ? 'player__turn' : (props.pendingAnswer ? 'player--pending_answer' : '')} ${props.firstChild ? 'player--first-child' : ''} ${props.lastChild ? 'player--last-child' : ''}`}>

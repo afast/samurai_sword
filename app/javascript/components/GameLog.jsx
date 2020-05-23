@@ -14,12 +14,13 @@ const GameLog = props => (
         </div>
       ) }
     </div>
-    { props.pendingAnswer && props.defendFrom && <div className="game_info__log__current_card">
+    { props.defendFrom && (props.defendFrom.name == 'intuicion' || props.pendingAnswer) && <div className="game_info__log__current_card">
       <span className="game_info__log__current_card__log">
         {props.lastAction}<br/>
         Esperando por: {props.pendingUsers.join(', ')}
       </span>
       <Card name={props.defendFrom.name} visible={true} />
+      { props.defendFrom.name == 'intuicion' && props.proposed && <div className='game_info__log__intuicion_card'><Card name={props.proposed} visible={true} /></div> }
     </div>}
   </div>
 )
@@ -34,10 +35,14 @@ GameLog.propTypes = {
 
 const mapStateToProps = (state) => {
   const { game } = state;
+  let currentPlayer;
+  game.players.map( (p) => { if (p.user.id == state.currentUser.id) currentPlayer = p } )
+
   return { 
     log: [...game.log],
     lastAction: game.last_action,
     defendFrom: game.defend_from,
+    proposed: game.intuicion_list && game.intuicion_list[currentPlayer.character],
     pendingAnswer: game.pending_answer && game.pending_answer.length > 0,
     pendingUsers: game.pending_answer && game.pending_answer.map( (p) => p.user.username ),
   }

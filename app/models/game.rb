@@ -2,14 +2,10 @@ class Game < ApplicationRecord
   STATUS = {
     waiting: 'WAITING',
     started: 'STARTED',
-    ended: 'ENDE'
+    ended: 'ENDED'
   }
 
   has_and_belongs_to_many :users
-
-  #attr_accessor :amount_players, :hand, :turn, :phase, :wait_for_answer, :game_ended, :samurai_points, :ninja_points,
-                #:ronin_points, :winning_team
-  #attr_accessor :players, :deck, :discarded, :pending_answer, :target, :defend_from, :log, :resolve_bushido, :bushido_in_play
 
   serialize :players
   serialize :deck
@@ -19,9 +15,11 @@ class Game < ApplicationRecord
   serialize :users
   serialize :pending_answer
   serialize :defend_from
+  serialize :intuicion_list
 
   CHARACTERS = [:benkei, :chiyome, :ginchiyo, :goemon, :hanzo, :hideyoshi, :ieyasu, :kojiro, :musashi, :nobunaga, :tomoe, :ushiwaka]
-  INITIAL_AMOUNT_CARDS = [4, 5, 5, 6, 6, 7, 7]
+  EXPANSION_CHARACTERS = CHARACTERS #+ [:bokuden, :damachacha, :gracia, :kanbei, :kenshin, :masamune, :motonari, :okuni, :shima, :shingen, :yoshihiro, :yukimura]
+  INITIAL_AMOUNT_CARDS = [4, 5, 5, 6, 6, 7, 7, 7]
 
   after_initialize do |game|
     game.status = STATUS[:waiting] unless game.status
@@ -42,15 +40,18 @@ class Game < ApplicationRecord
       roles += [Ninja.new, Samurai.new, Ronin.new, Ninja.new]
     when 7
       roles += [Ninja.new, Samurai.new, Ronin.new, Ninja.new, Samurai.new]
+    when 8
+      roles += [Ninja.new, Samurai.new, Ronin.new, Ninja.new, Samurai.new, Ronin.new]
     end
     roles.shuffle
   end
 
   def initialize_players
-    player_set = CHARACTERS.shuffle.shuffle.shuffle.take(amount_players).zip(determine_roles(amount_players))
+    character_set = extension ? EXPANSION_CHARACTERS : CHARACTERS
+    player_set = character_set.shuffle.shuffle.shuffle.take(amount_players).zip(determine_roles(amount_players))
     i=-1
     return player_set.map do |character, role|
-      i = i+1
+      i += 1
       self.turn = i if role.is_a?(Shogun)
       char = character.to_s.capitalize.constantize.new
       Player.new(role, char, users[i], amount_players)
@@ -58,7 +59,7 @@ class Game < ApplicationRecord
   end
 
   def initialize_cards
-    Card.initialize_cards.shuffle
+    Card.initialize_cards(extension).shuffle
   end
 
   def start
@@ -253,7 +254,7 @@ class Game < ApplicationRecord
     when Card::WEAPON
       self.last_error = "Error, no player for index" unless target
       self.last_error = "Error, #{current_player.user.username} no puede jugar mas armas" unless current_player.can_play_weapon?(self.players.size)
-      self.last_error = "Error, #{target.user.username} esta inofensivo" if target.inoffensive
+      self.last_error = "Error, #{target.user.username} esta inofensivo" if target.inoffensive(card)
       self.last_error = "Error, #{target.user.username} esta demasiado lejos" if current_player.distance(self.turn, target_index, self) > card.distance
       if self.last_error
         self.log << { player: current_player.user.username, message: self.last_error, type: :error }
@@ -269,13 +270,15 @@ class Game < ApplicationRecord
       self.target = target
       self.discarded << current_player.cards.delete_at(card_index)
       self.defend_from = card
-      current_player.weapons_played += 1
+      draw_cards(current_player, 1) if current_player.bokuden? && card.templo?
+      current_player.weapons_played += 1 unless card.additional_weapon?
       update(players: self.players)
       save
       handle_game_end
     when Card::PROPERTY
       self.defend_from = {}
-      if card_name == 'bushido'
+      case card_name
+      when 'bushido'
         if self.bushido_in_play
           self.log << { player: current_player.user.username, message: "Ya hay un Bushido en juego", type: :error }
         else
@@ -285,6 +288,11 @@ class Game < ApplicationRecord
           self.last_action = "#{current_player.user.username} jugó #{card.friendly_name} a #{target.user.username}"
           self.log << { player: current_player.user.username, message: self.last_action, type: :info }
         end
+      when 'maldicion', 'herida_sangrante'
+        target.visible_cards ||= []
+        target.visible_cards << current_player.cards.delete_at(card_index)
+        self.last_action = "#{current_player.user.username} jugó #{card.friendly_name} a #{target.user.username}"
+        self.log << { player: current_player.user.username, message: self.last_action, type: :info }
       else
         current_player.visible_cards ||= []
         current_player.visible_cards << current_player.cards.delete_at(card_index)
@@ -299,6 +307,7 @@ class Game < ApplicationRecord
         if target
           current_player.reset_resistance!
           draw_cards(target, 1)
+          draw_cards(current_player, 1) if current_player.bokuden? && card.templo?
           self.last_action = "Respiracion - #{current_player.character} recupero resistencia y #{target.character} robo una carta"
           self.log << { player: current_player.user.username, message: self.last_action, type: :info }
           self.discarded << current_player.cards.delete_at(card_index)
@@ -332,6 +341,7 @@ class Game < ApplicationRecord
       when 'ceremonia_del_te'
         draw_cards(current_player, 3)
         all_other_players.each { |p| draw_cards(p, 1) }
+        draw_cards(current_player, 1) if current_player.bokuden? && card.templo?
         self.last_action = "Jugó Ceremonia del Te, recibe 3 cartas y el resto reciben 1"
         self.log << { player: current_player.user.username, message: self.last_action, type: :info }
         self.discarded << current_player.cards.delete_at(card_index)
@@ -342,6 +352,7 @@ class Game < ApplicationRecord
           self.last_action = "Jugó Distracción, roba una carta al azar de la mano de #{target.user.username}"
           self.log << { player: current_player.user.username, message: self.last_action, type: :info }
           self.discarded << current_player.cards.delete_at(card_index)
+          handle_kote(card)
         else
           self.last_error = "Error, debe elegir un jugador a quien robar la carta" unless target
           self.last_error = "Error, el jugador no posee cartas" unless target.cards.any?
@@ -361,11 +372,34 @@ class Game < ApplicationRecord
             end
             self.last_action = "Jugó Geisha, descartó #{self.discarded.last.friendly_name} de #{target.user.username}"
           end
+          handle_kote(card)
           self.log << { player: current_player.user.username, message: self.last_action, type: :info }
         else
           self.last_error = "Error, debe elegir un jugador a quien robar la carta" unless target
           self.last_error = "Error, debe elegir un jugador con cartas" if what_card == 'from_hand' && target.cards.none?
-          self.log << { player: current_player.user.username, message: self.last_eror, type: :error }
+          self.log << { player: current_player.user.username, message: self.last_error, type: :error }
+        end
+        save
+      when 'intuicion'
+        self.pending_answer = []
+        self.last_action = "Jugó Intuición, todos los demas deben ofrecer una carta para que #{current_player.user.username} elija"
+        self.log << { player: current_player.user.username, message: self.last_action, type: :info }
+        all_other_offensive_players.each do |p|
+          self.pending_answer << p
+        end
+        self.discarded << current_player.cards.delete_at(card_index)
+        self.defend_from = card
+        #handle_kote(card) Handle after selecting card
+        save
+      when 'imitacion'
+        if target
+          self.discarded << current_player.cards.delete_at(card_index)
+          current_player.cards << target.visible_cards.delete_at(target.find_visible_card(what_card))
+          self.last_action = "Jugó Imitación, robó #{current_player.cards.last.friendly_name} de #{target.user.username}"
+          self.log << { player: current_player.user.username, message: self.last_action, type: :info }
+        else
+          self.last_error = "Error, debe elegir un jugador a quien robar la carta" unless target
+          self.log << { player: current_player.user.username, message: self.last_error, type: :error }
         end
         save
       when 'daimio'
@@ -374,26 +408,57 @@ class Game < ApplicationRecord
         self.log << { player: current_player.user.username, message: self.last_action, type: :info }
         self.discarded << current_player.cards.delete_at(card_index)
         save
+      when 'ataque_simultaneo'
+        if current_player.resistance > 1 && target && target.resistance > 1
+          current_player.resistance -= 1
+          target.resistance -= 1
+          self.last_action = "Jugó Ataque Simultáneo, pierde uno de resistencia y #{target.user.username} también"
+          self.log << { player: current_player.user.username, message: self.last_action, type: :info }
+          self.discarded << current_player.cards.delete_at(card_index)
+          save
+        else
+          self.last_error = "Error, debes tener al menos 2 puntos de resistencia" unless current_player.resistance > 1
+          self.last_error = "Error, el jugador atacado debe tener al menos 2 puntos de resistencia" unless target.resistance > 1
+          self.log << { player: current_player.user.username, message: self.last_error, type: :info }
+        end
       end
     end
     save
   end
 
-  def take_damage(character)
+  def take_damage(character, campesinos)
     if resolve_bushido
       current_player.honor -= 1 unless current_player.role.is_a?(Shogun) && players.size == 3
       self.discarded << current_player.discard_bushido
       self.log << { player: current_player.user.username, message: "Pierde 1 honor debido a Bushido", type: :info }
       self.bushido_in_play = false
       self.resolve_bushido = false
-    else
+    elsif self.defend_from.name == :contrataque
+      campesino_damage_modifier = campesinos || 0
       index = pending_answer.index { |c| c.character.to_s.downcase == character.downcase  }
       player_to_receive_damage = pending_answer.delete_at index
       player_to_receive_damage = find_player_by_character(player_to_receive_damage.character)
+      origin_player = self.defend_from.counter_attack_source
+      campesino_damage_modifier.times { self.discarded << player_to_receive_damage.discard_campesino }
       self.wait_for_answer = false if pending_answer.blank?
-      self.last_action = "#{player_to_receive_damage.user.username} recibe #{defend_from.damage + current_player.damage_modifier(defend_from)} de daño por #{defend_from.friendly_name}"
+      self.last_action = "#{player_to_receive_damage.user.username} recibe #{defend_from.damage - campesino_damage_modifier + current_player.damage_modifier(defend_from)} de daño por #{defend_from.friendly_name}"
       self.log << { player: current_player.user.username, message: self.last_action, type: :info }
-      if player_to_receive_damage.take_damage(defend_from.damage, current_player, defend_from)
+      if player_to_receive_damage.take_simple_damage(defend_from.damage - campesino_damage_modifier, origin_player)
+        if current_player.resistance.zero?
+          self.log << { player: current_player.user.username, message: 'Pierde ultima resistencia por contrataque, finaliza turno', type: :info }
+          next_phase
+        end
+      end
+    else
+      campesino_damage_modifier = campesinos || 0
+      index = pending_answer.index { |c| c.character.to_s.downcase == character.downcase  }
+      player_to_receive_damage = pending_answer.delete_at index
+      player_to_receive_damage = find_player_by_character(player_to_receive_damage.character)
+      campesino_damage_modifier.times { self.discarded << player_to_receive_damage.discard_campesino }
+      self.wait_for_answer = false if pending_answer.blank?
+      self.last_action = "#{player_to_receive_damage.user.username} recibe #{defend_from.damage - campesino_damage_modifier + current_player.damage_modifier(defend_from)} de daño por #{defend_from.friendly_name}"
+      self.log << { player: current_player.user.username, message: self.last_action, type: :info }
+      if player_to_receive_damage.take_damage(defend_from.damage - campesino_damage_modifier, current_player, defend_from)
         handle_action_after_damage(current_player, player_to_receive_damage, defend_from)
       end
     end
@@ -403,12 +468,27 @@ class Game < ApplicationRecord
   end
 
   def handle_action_after_damage(current_player, damaged_player, defend_from)
-    if current_player.draw_card_after_making_damage?(defend_from.type)
+    case
+    when current_player.draw_card_after_making_damage?(defend_from.type)
       draw_cards(current_player, 1)
-    end
-
-    if damaged_player.draw_card_after_receiving_damage?(defend_from.type)
+    when damaged_player.draw_card_after_receiving_damage?(defend_from.type)
       draw_cards(damaged_player, 1)
+    when defend_from.return_card?
+      current_player.cards << self.discarded.delete_at(discarded.size - 1)
+    when defend_from.discard_if_damaged?
+      self.last_action = "#{damaged_player.user.username} recibe #{defend_from.damage + current_player.damage_modifier(defend_from)} de daño por #{defend_from.friendly_name} - Ahora debe descartar una carta a elección."
+      self.log << { player: current_player.user.username, message: self.last_action, type: :info }
+      self.pending_answer << damaged_player
+      self.defend_from.already_damaged = true
+    when damaged_player.has_maldicion?
+      if damaged_player.resistance.zero?
+        if damaged_player.has_bushido?
+          self.bushido_in_play = false
+          self.resolve_bushido = false
+        end
+        self.discarded += damaged_player.visible_cards
+        damaged_player.visible_cards = []
+      end
     end
     save
   end
@@ -424,7 +504,34 @@ class Game < ApplicationRecord
     self.last_action = "#{current_player.user.username} atacó a #{player_to_receive_damage.user.username} con #{defend_from.friendly_name} pero fue defendido."
     self.log << { player: current_player.user.username, message: self.last_action, type: :info }
     self.discarded << player_to_receive_damage.discard_stop_card
+    draw_cards(player_to_receive_damage, 1) if player_to_receive_damage.bokuden? && self.discarded.last.templo?
     save
+  end
+
+  def play_counter_stop(character)
+    if self.defend_from.name == :contrataque
+      self.last_error = "Error, no se puede defender un contrataque con otro contrataque"
+      self.log << { player: current_player.user.username, message: self.last_error, type: :error }
+    elsif self.defend_from.type != Card::WEAPON
+      self.last_error = "Error, solo se puede usar contrataque para defender armas"
+      self.log << { player: current_player.user.username, message: self.last_error, type: :error }
+    else
+      index = pending_answer.index { |c| c.character.to_s.downcase == character.downcase  }
+      player_to_receive_damage = pending_answer.delete_at index
+      player_to_receive_damage = find_player_by_character(player_to_receive_damage.character)
+      self.pending_answer << current_player
+      if pending_answer.blank?
+        self.pending_answer = nil
+        self.wait_for_answer = false
+      end
+      self.last_action = "#{current_player.user.username} atacó a #{player_to_receive_damage.user.username} con #{defend_from.friendly_name} pero fue contratacado."
+      self.log << { player: current_player.user.username, message: self.last_action, type: :info }
+      self.discarded << player_to_receive_damage.discard_counter_stop
+      self.defend_from = self.discarded.last
+      self.defend_from.counter_attack_source = player_to_receive_damage
+      draw_cards(player_to_receive_damage, 1) if player_to_receive_damage.bokuden? && self.discarded.last.templo?
+      save
+    end
   end
 
   def respond_weapon(character, weapon_name)
@@ -435,9 +542,10 @@ class Game < ApplicationRecord
       self.pending_answer = nil
       self.wait_for_answer = false
     end
-    self.last_action = "#{target.user.username} descarto un arma: #{weapon_name.to_s.humanize}"
+    self.last_action = "#{target.user.username} descarto: #{weapon_name.to_s.humanize}"
     self.log << { player: current_player.user.username, message: self.last_action, type: :info }
     self.discarded << target.discard_card(weapon_name)
+    draw_cards(target, 1) if target.bokuden? && self.discarded.last.templo?
     save
   end
 
@@ -461,6 +569,7 @@ class Game < ApplicationRecord
     self.log << { player: current_player.user.username, message: self.last_action, type: :info }
     self.resolve_bushido = false
     self.discarded << current_player.discard_card(weapon_name)
+    draw_cards(current_player, 1) if current_player.bokuden? && self.discarded.last.templo?
     transfer_bushido
     save
   end
@@ -485,6 +594,69 @@ class Game < ApplicationRecord
         transfer_bushido
       end
     end
+    save
+  end
+
+  def handle_herida_sangrante
+    if current_player.has_herida_sangrante? && current_player.resistance > 1
+      reveal_card = self.deck.delete_at(0)
+      self.discarded << reveal_card
+      if reveal_card.origami?
+        if current_player.has_campesinos?
+          self.log << { player: current_player.user.username, message: "Salio origami con Herida Sangrante, dando opcion a jugador de utilizar campesino.", type: :info }
+          self.pending_answer = [current_player]
+          self.defend_from = current_player.find_herida_sangrante
+        else
+          current_player.resistance -= 1
+          self.log << { player: current_player.user.username, message: "Herida Sangrante - Salio origami, pierde uno de resistencia", type: :info }
+        end
+      else
+        self.log << { player: current_player.user.username, message: "Herida Sangrante - No salio origami", type: :info }
+      end
+      save
+    end
+  end
+
+  def kote_selected_player(character)
+    index = pending_answer.index { |c| c.character.to_s.downcase == current_player.character.to_s.downcase  }
+    return unless index
+    pending_answer.delete_at index
+    target = find_player_by_character(character)
+    if pending_answer.blank?
+      self.pending_answer = nil
+      self.wait_for_answer = false
+    end
+    self.defend_from = {}
+    self.last_action = "#{target.user.username} roba una carta"
+    self.log << { player: current_player.user.username, message: self.last_action, type: :info }
+    draw_cards(target, 1)
+    save
+  end
+
+  def handle_kote(card)
+    return unless card.koi? && current_player.has_kote?
+    self.defend_from = current_player.find_kote
+    self.pending_answer = [current_player]
+  end
+
+  def propose_for_intuicion(character, card_name)
+    return unless self.defend_from.name == :intuicion
+    pending_answer.delete_at(pending_answer.index { |c| c.character.to_s.downcase == character.downcase  })
+    self.intuicion_list ||= {}
+    self.intuicion_list[character] = card_name
+    save
+  end
+
+  def steal_by_intuicion(character, card_name)
+    return unless self.defend_from.name == :intuicion
+    target = find_player_by_character(character)
+    card_index = target.cards.index { |c| c.name.to_s == card_name.downcase }
+    current_player.cards << target.cards.delete_at(card_index)
+    self.last_action = "Intuicion, roba #{card_name} de la mano de #{target.user.username}"
+    self.log << { player: current_player.user.username, message: self.last_action, type: :info }
+    self.defend_from = {}
+    self.intuicion_list = {}
+    handle_kote(self.discarded.last)
     save
   end
 
@@ -525,8 +697,12 @@ class Game < ApplicationRecord
       else
         self.phase = 2
       end
+      current_player.handle_gracia
     end
-    handle_bushido if self.phase == 2
+    if self.phase == 2
+      handle_bushido
+      handle_herida_sangrante
+    end
     save
   end
 end

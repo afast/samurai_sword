@@ -4,7 +4,7 @@ class GamesController < ApplicationController
   end
 
   def create
-    @game = Game.create
+    @game = Game.create(extension: params[:game][:extension])
     @game.users << current_user
     redirect_to action: :show, id: @game.id
   end
@@ -174,7 +174,7 @@ class GamesController < ApplicationController
     @game = Rails.cache.fetch("game-#{params[:id]}", expires_in: 24.hours) do
       Game.find(params[:id])
     end
-    raise "Error, wrong phase to take cards" unless @game.phase == 4
+    raise "Error, wrong phase to discard cards" unless @game.phase == 4
     @game.discard_card(params[:card_name])
     Rails.cache.write("game-#{@game.id}", @game, expires_in: 24.hours)
     GameChannel.broadcast_to(@game, @game)
@@ -204,7 +204,47 @@ class GamesController < ApplicationController
       Game.find(params[:id])
     end
     raise "Error, you're not waiting to respond" unless @game.resolve_bushido || @game.pending_answer.map { |p| p.character.to_s.downcase }.include?(params[:character].downcase)
-    @game.take_damage(params[:character])
+    @game.take_damage(params[:character], params[:campesinos])
+    Rails.cache.write("game-#{@game.id}", @game, expires_in: 24.hours)
+    GameChannel.broadcast_to(@game, @game)
+    respond_to do |format|
+      format.html { redirect_to admin_game_url(@game.id || 1) }
+      format.json { render json: @game }
+    end
+  end
+
+  def kote_selected_player
+    @game = Rails.cache.fetch("game-#{params[:id]}", expires_in: 24.hours) do
+      Game.find(params[:id])
+    end
+    @game.kote_selected_player(params[:character])
+    Rails.cache.write("game-#{@game.id}", @game, expires_in: 24.hours)
+    GameChannel.broadcast_to(@game, @game)
+    respond_to do |format|
+      format.html { redirect_to admin_game_url(@game.id || 1) }
+      format.json { render json: @game }
+    end
+  end
+
+  def propose_for_intuicion
+    @game = Rails.cache.fetch("game-#{params[:id]}", expires_in: 24.hours) do
+      Game.find(params[:id])
+    end
+    raise "Error, you're not waiting to respond" unless @game.pending_answer.map { |p| p.character.to_s.downcase }.include?(params[:character].downcase)
+    @game.propose_for_intuicion(params[:character], params[:card_name])
+    Rails.cache.write("game-#{@game.id}", @game, expires_in: 24.hours)
+    GameChannel.broadcast_to(@game, @game)
+    respond_to do |format|
+      format.html { redirect_to admin_game_url(@game.id || 1) }
+      format.json { render json: @game }
+    end
+  end
+
+  def steal_by_intuicion
+    @game = Rails.cache.fetch("game-#{params[:id]}", expires_in: 24.hours) do
+      Game.find(params[:id])
+    end
+    @game.steal_by_intuicion(params[:character], params[:card_name])
     Rails.cache.write("game-#{@game.id}", @game, expires_in: 24.hours)
     GameChannel.broadcast_to(@game, @game)
     respond_to do |format|
@@ -219,6 +259,20 @@ class GamesController < ApplicationController
     end
     raise "Error, you're not waiting to respond" unless @game.pending_answer.map { |p| p.character.to_s.downcase }.include?(params[:character].downcase)
     @game.play_stop(params[:character])
+    Rails.cache.write("game-#{@game.id}", @game, expires_in: 24.hours)
+    GameChannel.broadcast_to(@game, @game)
+    respond_to do |format|
+      format.html { redirect_to admin_game_url(@game.id || 1) }
+      format.json { render json: @game }
+    end
+  end
+
+  def play_counter_stop
+    @game = Rails.cache.fetch("game-#{params[:id]}", expires_in: 24.hours) do
+      Game.find(params[:id])
+    end
+    raise "Error, you're not waiting to respond" unless @game.pending_answer.map { |p| p.character.to_s.downcase }.include?(params[:character].downcase)
+    @game.play_counter_stop(params[:character])
     Rails.cache.write("game-#{@game.id}", @game, expires_in: 24.hours)
     GameChannel.broadcast_to(@game, @game)
     respond_to do |format|

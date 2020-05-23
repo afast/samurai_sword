@@ -88,8 +88,8 @@ export const wantsToPlay = (card) => {
   return {type: actionTypes.WANTS_TO_PLAY, data: card};
 }
 
-export const takeDamage = (gameId, character) => (dispatch, getState) => {
-  api.takeDamage(gameId, character)
+export const takeDamage = (gameId, character, campesinos) => (dispatch, getState) => {
+  api.takeDamage(gameId, character, campesinos)
     .then(data => dispatch({type: actionTypes.LOAD_GAME_SUCCESS, data}))
     .catch(error => dispatch({type: actionTypes.ACTION_FAILURE, error}));
 }
@@ -100,8 +100,38 @@ export const playStop = (gameId, character) => (dispatch, getState) => {
     .catch(error => dispatch({type: actionTypes.ACTION_FAILURE, error}));
 }
 
+export const playCounterStop = (gameId, character) => (dispatch, getState) => {
+  api.playCounterStop(gameId, character)
+    .then(data => dispatch({type: actionTypes.DISCARD_CARD_SUCCESS, data}))
+    .catch(error => dispatch({type: actionTypes.ACTION_FAILURE, error}));
+}
+
+export const koteSelectedPlayer = (gameId, character) => (dispatch, getState) => {
+  api.koteSelectedPlayer(gameId, character)
+    .then(data => dispatch({type: actionTypes.DISCARD_CARD_SUCCESS, data}))
+    .catch(error => dispatch({type: actionTypes.ACTION_FAILURE, error}));
+}
+
+export const playWeaponAlsoStop = (gameId, character, card_name) => (dispatch, getState) => {
+  api.discardWeapon(gameId, character, card_name)
+    .then(data => dispatch({type: actionTypes.DISCARD_CARD_SUCCESS, data}))
+    .catch(error => dispatch({type: actionTypes.ACTION_FAILURE, error}));
+}
+
 export const discardWeapon = (gameId, character, card_name) => (dispatch, getState) => {
   api.discardWeapon(gameId, character, card_name)
+    .then(data => dispatch({type: actionTypes.DISCARD_CARD_SUCCESS, data}))
+    .catch(error => dispatch({type: actionTypes.ACTION_FAILURE, error}));
+}
+
+export const proposeForIntuicion = (gameId, character, card_name) => (dispatch, getState) => {
+  api.proposeForIntuicion(gameId, character, card_name)
+    .then(data => dispatch({type: actionTypes.DISCARD_CARD_SUCCESS, data}))
+    .catch(error => dispatch({type: actionTypes.ACTION_FAILURE, error}));
+}
+
+export const stealByIntuicion = (gameId, character, card_name) => (dispatch, getState) => {
+  api.stealByIntuicion(gameId, character, card_name)
     .then(data => dispatch({type: actionTypes.DISCARD_CARD_SUCCESS, data}))
     .catch(error => dispatch({type: actionTypes.ACTION_FAILURE, error}));
 }
@@ -145,8 +175,13 @@ export default {
   loadGameSuccess,
   takeDamage,
   playStop,
+  playCounterStop,
   discardWeapon,
   defendBushido,
+  koteSelectedPlayer,
+  playWeaponAlsoStop,
+  proposeForIntuicion,
+  stealByIntuicion,
   hanzoAbility,
   joinGame,
   startGame,

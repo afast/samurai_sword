@@ -2,7 +2,7 @@ import React from 'react'
 import ReactDOM from 'react-dom'
 import PropTypes from 'prop-types'
 import { connect } from 'react-redux'
-import { wantsToPlay } from '../actions/game'
+import { wantsToPlay, selectForIntuicion } from '../actions/game'
 
 class Card extends React.Component {
   constructor(props) {
@@ -11,8 +11,8 @@ class Card extends React.Component {
   }
 
   handleClick () {
-    const { phase, resolveBushido, clickable, index } = this.props;
-    if ((phase >= 3 || resolveBushido) && clickable && index >= 0 ) {
+    const { phase, resolveBushido, clickable, index, forIntuicion, character } = this.props;
+    if ((phase >= 3 || resolveBushido) && clickable && (index >= 0 || forIntuicion)) {
       this.props.wantsToPlay(this.props)
     }
   }

@@ -17,11 +17,15 @@ Rails.application.routes.draw do
       post :join
       post :take_damage
       post :play_stop
+      post :play_counter_stop
+      post :kote_selected_player
       post :discard_weapon
       post :defend_bushido
       post :hanzo_ability
       post :ieyasu_take_cards
       post :nobunaga_take_card
+      post :propose_for_intuicion
+      post :steal_by_intuicion
     end
   end
 

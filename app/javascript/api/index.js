@@ -44,6 +44,20 @@ export const discardWeapon = (id, character, card_name) => {
   }) })
 }
 
+export const proposeForIntuicion = (id, character, card_name) => {
+  return makeAuthenticatedRequest(`${API_URL}/games/${id}/propose_for_intuicion.json`, { method: 'POST', body: JSON.stringify({
+    character: character,
+    card_name: card_name
+  }) })
+}
+
+export const stealByIntuicion = (id, character, card_name) => {
+  return makeAuthenticatedRequest(`${API_URL}/games/${id}/steal_by_intuicion.json`, { method: 'POST', body: JSON.stringify({
+    character: character,
+    card_name: card_name
+  }) })
+}
+
 export const hanzoAbility = (id, character, card_name) => {
   return makeAuthenticatedRequest(`${API_URL}/games/${id}/hanzo_ability.json`, { method: 'POST', body: JSON.stringify({
     character: character,
@@ -66,15 +80,28 @@ export const loadGame = (id) => {
   return makeAuthenticatedRequest(`${API_URL}/games/${id}.json`)
 }
 
-export const takeDamage = (id, character) => {
+export const takeDamage = (id, character, campesinos) => {
   return makeAuthenticatedRequest(`${API_URL}/games/${id}/take_damage.json`, { method: 'POST', body: JSON.stringify({
-    character: character
+    character,
+    campesinos,
   }) })
 }
 
 export const playStop = (id, character) => {
   return makeAuthenticatedRequest(`${API_URL}/games/${id}/play_stop.json`, { method: 'POST', body: JSON.stringify({
-    character: character
+    character,
+  }) })
+}
+
+export const koteSelectedPlayer = (id, character) => {
+  return makeAuthenticatedRequest(`${API_URL}/games/${id}/kote_selected_player.json`, { method: 'POST', body: JSON.stringify({
+    character,
+  }) })
+}
+
+export const playCounterStop = (id, character) => {
+  return makeAuthenticatedRequest(`${API_URL}/games/${id}/play_counter_stop.json`, { method: 'POST', body: JSON.stringify({
+    character,
   }) })
 }
 
@@ -97,10 +124,14 @@ export default {
   endTurn,
   loadGame,
   playStop,
+  playCounterStop,
   takeDamage,
   discardWeapon,
   defendBushido,
   hanzoAbility,
+  proposeForIntuicion,
+  stealByIntuicion,
   joinGame,
   startGame,
+  koteSelectedPlayer,
 }

@@ -4,7 +4,7 @@ class Chiyome < Character
     4
   end
 
-  def can_be_hurt_by?(type)
-    type == :weapon
+  def can_be_hurt_by?(card)
+    card.type == :weapon
   end
 end

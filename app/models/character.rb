@@ -5,8 +5,8 @@ class Character
     0
   end
 
-  def can_be_hurt_by?(type)
-    [:weapon, :action].include?(type)
+  def can_be_hurt_by?(defend_from)
+    [:weapon, :action].include?(defend_from.type)
   end
 
   def final_damage(amount, type)

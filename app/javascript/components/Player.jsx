@@ -33,7 +33,6 @@ class Player extends React.Component {
   }
 
   resetState(name) {
-    console.log('reset state name: ' + name)
     if (name === 'honor') {
       this.setState({ lostHonor: false})
     } else if (name === 'lostResistance') {
@@ -48,7 +47,10 @@ class Player extends React.Component {
   render () {
     const { 
       discard_weapon,
+      discard_any,
+      tanto,
       discard_stop,
+      isCounterAttack,
       visible_cards,
       game_ended,
       honor,
@@ -59,6 +61,7 @@ class Player extends React.Component {
       character,
       cards,
       resistance,
+      waitForIntuicion,
       pendingAnswers,
       pendingAnswersUsers,
       resolveBushido
@@ -69,6 +72,9 @@ class Player extends React.Component {
     const waitingOnAnswer = !!pendingAnswers && pendingAnswers.length > 0
     const hanzoAbility = discard_stop && character == 'hanzo'
     const cardRobbed = !myTurn && !discard_stop && !discard_weapon && this.state.cardRobbed
+    const counterAttack = myTurn && waitingOnMyAnswer && isCounterAttack
+    const defendTanto = myTurn && waitingOnMyAnswer && tanto
+    const has_weapon_also_stop_card = cards.map( (c) => c.is_also ).includes('parada')
 
     const callbackFunction = (name) => { this.resetState(name) }
 
@@ -84,9 +90,9 @@ class Player extends React.Component {
             { cardRobbed && <PlayAlert name='robbed'  callback={callbackFunction}/> }
             { this.state.lostResistance && <PlayAlert name='lostResistance'  callback={callbackFunction}/> }
             { this.state.recoveredResistance && <PlayAlert name='recoveredResistance'  callback={callbackFunction}/> }
-            { myTurn && !game_ended && !waitingOnAnswer &&  <PlayerActions character={character} resistance={resistance} /> }
+            { myTurn && !game_ended && !waitingOnAnswer && !waitForIntuicion && <PlayerActions character={character} resistance={resistance} /> }
             { myTurn && waitingOnAnswer && <span>Esperando respuesta de: {pendingAnswersUsers.join(', ').toUpperCase()}</span> }
-            { (!myTurn && !game_ended && waitingOnMyAnswer || myTurn && resolveBushido) && <PlayerRespond resolveBushido={resolveBushido} cards={cards} character={character}/> }
+            { (!myTurn && !game_ended && waitingOnMyAnswer || myTurn && (resolveBushido || counterAttack || defendTanto)) && <PlayerRespond resolveBushido={resolveBushido} visible_cards={visible_cards} cards={cards} character={character}/> }
           </div>
         </div>
         <div className='player__info  player__info--current'>
@@ -111,7 +117,7 @@ class Player extends React.Component {
           <div className={'player-cards__actions ' + (visible ? '' : 'hidden')}>
             <ReactCSSTransitionGroup transitionName="card_animation" transitionEnterTimeout={3000} transitionLeaveTimeout={3000}>
               {cards.map((card, index) =>
-                <Card key={card.rkey} index={index} type={card.type} name={card.name} visible={visible} clickable={myTurn || waitingOnMyAnswer && (discard_weapon || hanzoAbility) && card.type == 'weapon'} />
+                <Card key={card.rkey} {...card} index={index} visible={visible} clickable={myTurn && !waitForIntuicion || waitingOnMyAnswer && ((discard_weapon || hanzoAbility) && card.type == 'weapon' || discard_any || discard_stop && card.is_also == 'parada')} />
               )}
             </ReactCSSTransitionGroup>
           </div>
@@ -144,17 +150,24 @@ Player.propTypes = {
 
 const mapStateToProps = (state) => {
   const { game } = state;
+  const defend_from = game.defend_from;
   const pendingAnswers = game.pending_answer && game.pending_answer.length && game.pending_answer.map( (p) => p.character )
   const pendingAnswersUsers = game.pending_answer && game.pending_answer.length && game.pending_answer.map( (p) => p.user.username )
+  const isChigiriki = defend_from && defend_from.name == 'chigiriki'
+  const isManrikigusari = defend_from && defend_from.name == 'manrikigusari'
   return {
     game_ended: game.game_ended,
     players: game.players,
     pendingAnswers: pendingAnswers,
     pendingAnswersUsers: pendingAnswersUsers,
     turn: game.turn,
+    isCounterAttack: defend_from && defend_from.name == 'contrataque',
     resolveBushido: game.resolve_bushido,
-    discard_stop: game.defend_from && (game.defend_from.type == 'weapon' || game.defend_from.name == 'grito_de_batalla') && !game.resolve_bushido,
-    discard_weapon: game.defend_from && game.defend_from.name == 'jiujitsu',
+    discard_stop: defend_from && (defend_from.type == 'weapon' || defend_from.name == 'grito_de_batalla') && !game.resolve_bushido,
+    discard_weapon: defend_from && defend_from.name == 'jiujitsu' || isChigiriki,
+    discard_any: isManrikigusari && defend_from.already_damaged || defend_from && defend_from.name == 'intuicion',
+    waitForIntuicion: defend_from && defend_from.name == 'intuicion',
+    tanto: defend_from && defend_from.name == 'tanto',
   }
 }
 

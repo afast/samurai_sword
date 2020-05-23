@@ -29,8 +29,8 @@ class Player
     self.resistance = initial_resistance
   end
 
-  def inoffensive
-    cards.none? || resistance.zero?
+  def inoffensive(attack_card=nil)
+    resistance.zero? || cards.none? && (attack_card.nil? || !attack_card.damages_even_no_cards?)
   end
 
   def has_weapon?
@@ -49,12 +49,40 @@ class Player
     visible_cards.collect(&:name).include?(:bushido)
   end
 
+  def has_herida_sangrante?
+    visible_cards.collect(&:name).include?(:herida_sangrante)
+  end
+
+  def has_campesinos?
+    visible_cards.collect(&:name).include?(:campesino)
+  end
+
+  def has_kote?
+    visible_cards.collect(&:name).include?(:kote)
+  end
+
+  def find_kote
+    visible_cards[find_visible_card('kote')]
+  end
+
+  def find_herida_sangrante
+    visible_cards[find_visible_card('herida_sangrante')]
+  end
+
+  def has_maldicion?
+    visible_cards.collect(&:name).include?(:maldicion)
+  end
+
   def discard_bushido
     visible_cards.delete_at(visible_cards.index { |c| c.name == :bushido })
   end
 
-  def damage_modifier(defend_from=nil)
-    modifier = defend_from && character.damage_modifier(defend_from.type) || 0
+  def damage_modifier(defend_from=nil, target=nil)
+    modifier = 0
+    if defend_from
+      modifier += character.damage_modifier(defend_from.type) || 0
+      modifier += defend_from.damage_modifier(target)
+    end
     if (defend_from && defend_from.type == :weapon)
       modifier += visible_cards.collect(&:damage_modifier).inject(0, :+)
     end
@@ -73,14 +101,34 @@ class Player
     visible_cards.index { |c| c.name.to_s == card_name }
   end
 
-  def take_damage(damage, from_player, defend_from)
-    return unless character.can_be_hurt_by?(defend_from.type)
+  def take_simple_damage(damage, from_player)
     previous_resistance = self.resistance
-    self.resistance -= character.final_damage(damage + from_player.damage_modifier(defend_from), defend_from.type)
+    self.resistance -= damage if damage > 0
     if self.resistance <= 0
       self.resistance = 0
       self.honor -= 1
       from_player.honor += 1
+      hs_index = self.visible_cards.index { |c| c.name.to_s == 'herida_sangrante' }
+      self.visible_cards.delete_at(hs_index) if hs_index
+    end
+    return previous_resistance > self.resistance
+  end
+
+  def take_damage(damage, from_player, defend_from)
+    return unless character.can_be_hurt_by?(defend_from)
+    previous_resistance = self.resistance
+    final_damage = character.final_damage(damage + from_player.damage_modifier(defend_from, self), defend_from.type)
+    self.resistance -= final_damage if final_damage > 0
+    if self.resistance <= 0
+      self.resistance = 0
+      if (character == from_player.character && defend_from.add_honor_to_self?)
+        self.honor += 1
+      else
+        self.honor -= 1
+        from_player.honor += 1
+        hs_index = self.visible_cards.index { |c| c.name.to_s == 'herida_sangrante' }
+        self.visible_cards.delete_at(hs_index) if hs_index
+      end
     end
     return previous_resistance > self.resistance
   end
@@ -123,7 +171,7 @@ class Player
   end
 
   def draw_card_amount
-    character.draw_card_amount
+    character.draw_card_amount + visible_cards.collect(&:draw_additional_cards).inject(0, :+)
   end
 
   def distance(start_index, end_index, game)
@@ -159,7 +207,25 @@ class Player
     cards.delete_at(cards.index { |c| c.name.to_s == card_name.to_s })
   end
 
+  def discard_counter_stop
+    discard_card :contrataque
+  end
+
+  def discard_campesino
+    visible_cards.delete_at(visible_cards.index { |c| c.name == :campesino })
+  end
+
   def discard_stop_card
     discard_card :parada
+  end
+
+  def handle_gracia
+    if character.is_a?(Gracia) && resistance < initial_resistance
+      resistance += 1
+    end
+  end
+
+  def bokuden?
+    character.is_a? Bokuden
   end
 end

@@ -3,6 +3,7 @@ class Player
 
   def initialize(role, character, user, amount_players)
     raise "Error, player must have a valid role" unless role.is_a?(Role)
+    p character
     raise "Error, player must have a valid character" unless character.is_a?(Character)
     self.role = role
     self.user = user
@@ -74,7 +75,7 @@ class Player
   end
 
   def discard_bushido
-    visible_cards.delete_at(visible_cards.index { |c| c.name == :bushido })
+    discard_visible_card :bushido
   end
 
   def damage_modifier(defend_from=nil, target=nil)
@@ -115,7 +116,7 @@ class Player
   end
 
   def take_damage(damage, from_player, defend_from)
-    return unless character.can_be_hurt_by?(defend_from)
+    return false unless character.can_be_hurt_by?(defend_from)
     previous_resistance = self.resistance
     final_damage = character.final_damage(damage + from_player.damage_modifier(defend_from, self), defend_from.type)
     self.resistance -= final_damage if final_damage > 0
@@ -207,16 +208,49 @@ class Player
     cards.delete_at(cards.index { |c| c.name.to_s == card_name.to_s })
   end
 
+  def discard_visible_card(card_name)
+    visible_cards.delete_at(visible_cards.index { |c| c.name.to_s == card_name.to_s })
+  end
+
   def discard_counter_stop
     discard_card :contrataque
   end
 
   def discard_campesino
-    visible_cards.delete_at(visible_cards.index { |c| c.name == :campesino })
+    discard_visible_card :campesino
   end
 
   def discard_stop_card
     discard_card :parada
+  end
+
+  def discard_origami_card(card_name)
+    card_index = cards.index { |c| c.name.to_s == card_name.to_s }
+    if cards[card_index].origami?
+      cards.delete_at card_index
+    else
+      false
+    end
+  end
+
+  def okuni?
+    character.is_a? Okuni
+  end
+
+  def shingen?
+    character.is_a? Shingen
+  end
+
+  def yukimura?
+    character.is_a? Yukimura
+  end
+
+  def masamune?
+    character.is_a? Masamune
+  end
+
+  def has_origami_cards?
+    cards.collect(&:origami?).inject(false, :|)
   end
 
   def handle_gracia

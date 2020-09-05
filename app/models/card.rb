@@ -307,7 +307,7 @@ class Card
       type: :property,
       symbol: :origami,
       distance: 0,
-      damage: 0,
+      damage: 1,
       count: 2
     },
     kote: {
@@ -375,7 +375,7 @@ class Card
     }
   }
 
-  attr_accessor :type, :name, :distance, :damage, :rkey, :already_damaged, :defend_with, :is_also, :symbol, :counter_attack_source
+  attr_accessor :type, :name, :distance, :damage, :rkey, :already_damaged, :defend_with, :is_also, :symbol, :counter_attack_source, :what_card
 
   def self.initialize_cards(expansion)
     cards = []
@@ -456,6 +456,10 @@ class Card
 
   def origami?
     symbol == :origami
+  end
+
+  def monte?
+    symbol == :monte
   end
 
   def templo?

@@ -22,10 +22,13 @@ Rails.application.routes.draw do
       post :discard_weapon
       post :defend_bushido
       post :hanzo_ability
+      post :kanbei_ability
       post :ieyasu_take_cards
       post :nobunaga_take_card
       post :propose_for_intuicion
       post :steal_by_intuicion
+      post :shima_ability
+      post :okuni_ability
     end
   end
 

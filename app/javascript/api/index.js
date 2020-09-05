@@ -18,12 +18,13 @@ export const nobunagaTakeCard = (id) => {
   return makeAuthenticatedRequest(`${API_URL}/games/${id}/nobunaga_take_card.json`, { method: 'POST' })
 }
 
-export const playCard = (id, player, card, target, geisha) => {
+export const playCard = (id, player, card, target, geisha, accepted) => {
   return makeAuthenticatedRequest(`${API_URL}/games/${id}/play_card.json`, { method: 'POST', body: JSON.stringify({
     player: player.character,
     card: card.name,
     target: target,
     geisha: geisha,
+    accepted: accepted,
   }) })
 }
 
@@ -60,6 +61,27 @@ export const stealByIntuicion = (id, character, card_name) => {
 
 export const hanzoAbility = (id, character, card_name) => {
   return makeAuthenticatedRequest(`${API_URL}/games/${id}/hanzo_ability.json`, { method: 'POST', body: JSON.stringify({
+    character: character,
+    card_name: card_name
+  }) })
+}
+
+export const kanbeiAbility = (id, character, card_name) => {
+  return makeAuthenticatedRequest(`${API_URL}/games/${id}/kanbei_ability.json`, { method: 'POST', body: JSON.stringify({
+    character: character,
+    card_name: card_name
+  }) })
+}
+
+export const okuniAbility = (id, character, card_name) => {
+  return makeAuthenticatedRequest(`${API_URL}/games/${id}/okuni_ability.json`, { method: 'POST', body: JSON.stringify({
+    character: character,
+    card_name: card_name
+  }) })
+}
+
+export const shimaAbility = (id, character, card_name) => {
+  return makeAuthenticatedRequest(`${API_URL}/games/${id}/shima_ability.json`, { method: 'POST', body: JSON.stringify({
     character: character,
     card_name: card_name
   }) })
@@ -129,6 +151,9 @@ export default {
   discardWeapon,
   defendBushido,
   hanzoAbility,
+  kanbeiAbility,
+  okuniAbility,
+  shimaAbility,
   proposeForIntuicion,
   stealByIntuicion,
   joinGame,

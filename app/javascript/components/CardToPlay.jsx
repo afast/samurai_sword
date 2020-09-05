@@ -2,7 +2,7 @@ import React from 'react'
 import ReactDOM from 'react-dom'
 import { connect } from 'react-redux'
 import PropTypes from 'prop-types'
-import {  playCard, discardCard, stealByIntuicion } from '../actions/game'
+import {  playCard, shimaAbility, discardCard, stealByIntuicion } from '../actions/game'
 import Card from './Card'
 
 class CardToPlay extends React.Component {
@@ -13,6 +13,7 @@ class CardToPlay extends React.Component {
     this.handleDiscardCard = this.handleDiscardCard.bind(this);
     this.onChangeWhatCard = this.onChangeWhatCard.bind(this);
     this.handleSelectIntuicion = this.handleSelectIntuicion.bind(this);
+    this.handleShima = this.handleShima.bind(this);
     this.state = { value: this.props.otherPlayers[0].character, what_card: null }
   }
 
@@ -39,12 +40,25 @@ class CardToPlay extends React.Component {
       myTurn,
     } = this.props
 
-    const cardsRequiringSelection = ['respiracion', 'distraccion', 'geisha', 'bushido', 'maldicion', 'ataque_simultaneo', 'imitacion', 'herida_sangrante']
+    const cardsRequiringSelection = ['respiracion', 'distraccion', 'geisha', 'bushido', 'maldicion', 'ataque_simultaneo', 'imitacion', 'herida_sangrante', 'shima']
 
     const requiresPlayerSelection = myTurn && (pending_card.type == 'weapon' || cardsRequiringSelection.includes(pending_card.name))
 
     if (!requiresPlayerSelection || this.state.value) {
       playCard(turnPlayer, pending_card, this.state.value, this.state.what_card)
+      this.setState({value: null })
+    }
+  }
+
+  handleShima () {
+    const {
+      pending_card,
+      shimaAbility,
+      game_id,
+    } = this.props
+
+    if (pending_card.name == 'shima' && this.state.value && this.state.what_card) {
+      shimaAbility(game_id, this.state.value, this.state.what_card)
       this.setState({value: null })
     }
   }
@@ -100,13 +114,18 @@ class CardToPlay extends React.Component {
     } )
 
     const myTurn = currentPlayer.character == turnPlayer.character
-    const cardsRequiringSelection = ['respiracion', 'distraccion', 'geisha', 'bushido', 'maldicion', 'ataque_simultaneo', 'imitacion', 'herida_sangrante']
+    const cardsRequiringSelection = ['respiracion', 'distraccion', 'geisha', 'bushido', 'maldicion', 'ataque_simultaneo', 'imitacion', 'herida_sangrante', 'shima']
+    const allowSelfSelection = ['imitacion', 'shima'].includes(pending_card.name)
     const requiresPlayerSelection = myTurn && (pending_card.type == 'weapon' || cardsRequiringSelection.includes(pending_card.name))
 
     return (
       <div className='card_to_play'>
         { pending_card.name && <Card name={pending_card.name} visible={true} /> }
         { phase == 3 && requiresPlayerSelection && <div className='card_to_play__player_list'>
+          { allowSelfSelection && currentPlayer && <label>
+            <input type="radio" checked={this.state.value == currentPlayer.character} name="target" value={currentPlayer.character} onChange={this.onChangeRadio}/>
+            {currentPlayer.user.username}
+          </label> }
           { otherPlayers.map( (player, i) =>
             <label key={`otherplayerlabel-${i}`}>
               <input key={`otherplayer-${i}`} type="radio" checked={this.state.value == player.character} name="target" value={player.character} onChange={this.onChangeRadio}/>
@@ -118,8 +137,9 @@ class CardToPlay extends React.Component {
               {currentPlayer.user.username}
             </label> }
         </div>}
-        { phase == 3 && myTurn && !selectForIntuicion && pending_card.name && <button onClick={this.handlePlayCard}>Jugar Carta</button> }
+        { phase == 3 && myTurn && !selectForIntuicion && pending_card.name && pending_card.name != 'shima' && <button onClick={this.handlePlayCard}>Jugar Carta</button> }
         { phase == 3 && myTurn && selectForIntuicion && pending_card.name && <button onClick={this.handleSelectIntuicion}>Robar Via Intuicion</button> }
+        { phase == 3 && myTurn && !selectForIntuicion && pending_card.name && pending_card.name == 'shima' && <button onClick={this.handleShima}>Robar carta por 1 de daño</button> }
         { phase == 3 && requiresPlayerSelection && pending_card.name == 'geisha' && <div className='card_to_play__player_list--geisha'>
             <span>Descartar de:</span>
             <label>
@@ -133,7 +153,7 @@ class CardToPlay extends React.Component {
               </label>
             ) }
           </div>}
-        { phase == 3 && requiresPlayerSelection && pending_card.name == 'imitacion' && <div className='card_to_play__player_list--geisha'>
+        { phase == 3 && requiresPlayerSelection && ['imitacion', 'shima'].includes(pending_card.name) && <div className='card_to_play__player_list--geisha'>
             <span>Robar:</span>
             { player && player.visible_cards && [...new Set(player.visible_cards.map((c) => c.name))].map( (name, i) => 
               <label key={`whatlabel-${i}`}>
@@ -165,7 +185,6 @@ CardToPlay.propTypes = {
 const mapStateToProps = (state) => {
   const { wantsToPlay, game } = state
   let otherPlayers = [...game.players]
-  console.log(game.players)
   const player = otherPlayers.splice(game.turn, 1)[0]
 
   let currentPlayer = {};
@@ -186,6 +205,6 @@ const mapStateToProps = (state) => {
   }
 }
 
-const mapActionsToProps = { playCard, discardCard, stealByIntuicion }
+const mapActionsToProps = { playCard, shimaAbility, discardCard, stealByIntuicion }
 
 export default connect(mapStateToProps, mapActionsToProps)(CardToPlay)

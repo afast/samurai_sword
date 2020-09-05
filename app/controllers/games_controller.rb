@@ -115,13 +115,28 @@ class GamesController < ApplicationController
     end
   end
 
+  def shima_ability
+    @game = Rails.cache.fetch("game-#{params[:id]}", expires_in: 24.hours) do
+      Game.find(params[:id])
+    end
+
+    raise "Error, wrong phase to take cards" unless [2,3].include?(@game.phase)
+    @game.shima_ability(params[:character], params[:card_name])
+    Rails.cache.write("game-#{@game.id}", @game, expires_in: 24.hours)
+    GameChannel.broadcast_to(@game, @game)
+    respond_to do |format|
+      format.html { redirect_to admin_game_url(@game.id || 1) }
+      format.json { render json: @game }
+    end
+  end
+
   def play_card
     @game = Rails.cache.fetch("game-#{params[:id]}", expires_in: 24.hours) do
       Game.find(params[:id])
     end
 
     raise "Error, wrong phase to play cards" unless @game.phase == 3
-    @game.play_card(params[:player], params[:card], params[:target], params[:geisha])
+    @game.play_card(params[:player], params[:card], params[:target], params[:geisha], params[:accepted])
     Rails.cache.write("game-#{@game.id}", @game, expires_in: 24.hours)
     GameChannel.broadcast_to(@game, @game)
     respond_to do |format|
@@ -301,6 +316,34 @@ class GamesController < ApplicationController
     end
     raise "Error, you're not waiting to respond" unless @game.pending_answer.map { |p| p.character.to_s.downcase }.include?(params[:character].downcase)
     @game.hanzo_ability(params[:character], params[:card_name])
+    Rails.cache.write("game-#{@game.id}", @game, expires_in: 24.hours)
+    GameChannel.broadcast_to(@game, @game)
+    respond_to do |format|
+      format.html { redirect_to admin_game_url(@game.id || 1) }
+      format.json { render json: @game }
+    end
+  end
+
+  def kanbei_ability
+    @game = Rails.cache.fetch("game-#{params[:id]}", expires_in: 24.hours) do
+      Game.find(params[:id])
+    end
+    raise "Error, you're not waiting to respond" unless @game.pending_answer.map { |p| p.character.to_s.downcase }.include?(params[:character].downcase)
+    @game.kanbei_ability(params[:character], params[:card_name])
+    Rails.cache.write("game-#{@game.id}", @game, expires_in: 24.hours)
+    GameChannel.broadcast_to(@game, @game)
+    respond_to do |format|
+      format.html { redirect_to admin_game_url(@game.id || 1) }
+      format.json { render json: @game }
+    end
+  end
+
+  def okuni_ability
+    @game = Rails.cache.fetch("game-#{params[:id]}", expires_in: 24.hours) do
+      Game.find(params[:id])
+    end
+    raise "Error, you're not waiting to respond" unless @game.pending_answer.map { |p| p.character.to_s.downcase }.include?(params[:character].downcase)
+    @game.okuni_ability(params[:character], params[:card_name])
     Rails.cache.write("game-#{@game.id}", @game, expires_in: 24.hours)
     GameChannel.broadcast_to(@game, @game)
     respond_to do |format|

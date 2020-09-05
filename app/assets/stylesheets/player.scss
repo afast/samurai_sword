@@ -168,8 +168,13 @@ div.player-cards {
     div.player-cards__character {
       display: inline-block;
 
-      .card:hover {
-	margin-bottom: -47px;
+      .card {
+        position: relative;
+        top: 0;
+
+        &:hover {
+          top: 30px;
+        }
       }
     }
 
@@ -278,6 +283,8 @@ div.player__respond div {
 
 div.player__actions {
   display: inline-block;
-  float: right;
-  margin-bottom: 20px;
+  position: relative;
+  right: 0px;
+  top: 0px;
+  margin-bottom: 15px;
 }

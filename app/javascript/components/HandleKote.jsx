@@ -9,13 +9,13 @@ class HandleKote extends React.Component {
     super(props);
     this.onChangeRadio = this.onChangeRadio.bind(this);
     this.koteSelectedPlayer = this.koteSelectedPlayer.bind(this);
-    this.state = { value: this.props.otherPlayers[0].character, what_card: null }
+    this.state = { value: this.props.players[0].character, what_card: null }
   }
 
   onChangeRadio(e) {
     let player = {};
 
-    this.props.otherPlayers.map( (p) => {
+    this.props.players.map( (p) => {
       if (p.character == e.target.value)
         player = p
     } )
@@ -46,7 +46,6 @@ class HandleKote extends React.Component {
       players,
       turnPlayer,
       currentUser,
-      otherPlayers
     } = this.props
 
     let currentPlayer = {};
@@ -64,7 +63,7 @@ class HandleKote extends React.Component {
     return (
       <div className='card_to_play'>
         { phase == 3 && <div className='card_to_play__player_list'>
-          { otherPlayers.map( (player, i) =>
+          { players.map( (player, i) =>
             <label key={`otherplayerlabel-${i}`}>
               <input key={`otherplayer-${i}`} type="radio" checked={this.state.value == player.character} name="target" value={player.character} onChange={this.onChangeRadio}/>
               {player.user.username}
@@ -78,12 +77,12 @@ class HandleKote extends React.Component {
 }
 
 HandleKote.defaultProps = {
-  otherPlayers: [],
+  players: [],
   currentPlayer: {}
 }
 
 HandleKote.propTypes = {
-  otherPlayers: PropTypes.array,
+  players: PropTypes.array,
   currentPlayer: PropTypes.object
 }
 
@@ -96,7 +95,6 @@ const mapStateToProps = (state) => {
   game.players.map( (p) => { if (p.user.id == state.currentUser.id) currentPlayer = p } )
 
   return { 
-    otherPlayers: otherPlayers,
     players: game.players,
     phase: game.phase,
     game_id: game.id,

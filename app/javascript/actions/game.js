@@ -45,9 +45,9 @@ export const nobunagaTakeCard = (id) => (dispatch, getState) => {
     .catch(error => dispatch({type: actionTypes.ACTION_FAILURE, error}));
 };
 
-export const playCard = (player, card_name, target, geisha) => (dispatch, getState) => {
+export const playCard = (player, card_name, target, geisha, accepted=false) => (dispatch, getState) => {
   const game = getState().game;
-  api.playCard(game.id, player, card_name, target, geisha)
+  api.playCard(game.id, player, card_name, target, geisha, accepted)
     .then(data => dispatch({type: actionTypes.PLAY_CARD_SUCCESS, data}))
     .catch(error => dispatch({type: actionTypes.ACTION_FAILURE, error}));
 };
@@ -148,6 +148,24 @@ export const hanzoAbility = (gameId, character, card_name) => (dispatch, getStat
     .catch(error => dispatch({type: actionTypes.ACTION_FAILURE, error}));
 }
 
+export const kanbeiAbility = (gameId, character, card_name) => (dispatch, getState) => {
+  api.kanbeiAbility(gameId, character, card_name)
+    .then(data => dispatch({type: actionTypes.DISCARD_CARD_SUCCESS, data}))
+    .catch(error => dispatch({type: actionTypes.ACTION_FAILURE, error}));
+}
+
+export const okuniAbility = (gameId, character, card_name) => (dispatch, getState) => {
+  api.okuniAbility(gameId, character, card_name)
+    .then(data => dispatch({type: actionTypes.DISCARD_CARD_SUCCESS, data}))
+    .catch(error => dispatch({type: actionTypes.ACTION_FAILURE, error}));
+}
+
+export const shimaAbility = (gameId, character, card_name) => (dispatch, getState) => {
+  api.shimaAbility(gameId, character, card_name)
+    .then(data => dispatch({type: actionTypes.DISCARD_CARD_SUCCESS, data}))
+    .catch(error => dispatch({type: actionTypes.ACTION_FAILURE, error}));
+}
+
 export const joinGame = (gameId) => (dispatch, getState) => {
   api.joinGame(gameId)
     .then(data => dispatch({type: actionTypes.LOAD_GAME_SUCCESS, data}))
@@ -183,6 +201,8 @@ export default {
   proposeForIntuicion,
   stealByIntuicion,
   hanzoAbility,
+  okuniAbility,
+  shimaAbility,
   joinGame,
   startGame,
 };

@@ -18,7 +18,7 @@ class Game < ApplicationRecord
   serialize :intuicion_list
 
   CHARACTERS = [:benkei, :chiyome, :ginchiyo, :goemon, :hanzo, :hideyoshi, :ieyasu, :kojiro, :musashi, :nobunaga, :tomoe, :ushiwaka]
-  EXPANSION_CHARACTERS = CHARACTERS #+ [:bokuden, :damachacha, :gracia, :kanbei, :kenshin, :masamune, :motonari, :okuni, :shima, :shingen, :yoshihiro, :yukimura]
+  EXPANSION_CHARACTERS = CHARACTERS + [:bokuden, :damachacha, :gracia, :kanbei, :kenshin, :masamune, :motonari, :okuni, :shima, :shingen, :yoshihiro, :yukimura]
   INITIAL_AMOUNT_CARDS = [4, 5, 5, 6, 6, 7, 7, 7]
 
   after_initialize do |game|
@@ -48,8 +48,10 @@ class Game < ApplicationRecord
 
   def initialize_players
     character_set = extension ? EXPANSION_CHARACTERS : CHARACTERS
+    p character_set.size
     player_set = character_set.shuffle.shuffle.shuffle.take(amount_players).zip(determine_roles(amount_players))
     i=-1
+    p player_set
     return player_set.map do |character, role|
       i += 1
       self.turn = i if role.is_a?(Shogun)
@@ -168,8 +170,34 @@ class Game < ApplicationRecord
       self.players.map { |p| p.honor -= 1 }
       self.log << { player: current_player.user.username, message: "Se acabo el mazo, todos pierden un punto de honor", type: :info }
       player.cards += self.deck.slice!(0, remaining) if remaining > 0
-      save
       handle_game_end
+      save
+    end
+  end
+
+  def discard_cards(amount)
+    return if self.game_ended
+    remaining = self.deck.size < amount ? amount - self.deck.size : 0
+    self.discarded += self.deck.slice!(0, amount)
+    if self.deck.size.zero?
+      self.deck = self.discarded.shuffle.shuffle.shuffle
+      self.discarded = []
+      self.players.map { |p| p.honor -= 1 }
+      self.log << { player: current_player.user.username, message: "Se acabo el mazo, todos pierden un punto de honor", type: :info }
+      self.discarded += self.deck.slice!(0, remaining) if remaining > 0
+      handle_game_end
+      save
+    end
+  end
+
+  def handle_deck_zero
+    if self.deck.size.zero?
+      self.deck = self.discarded.shuffle.shuffle.shuffle
+      self.discarded = []
+      self.players.map { |p| p.honor -= 1 }
+      self.log << { player: current_player.user.username, message: "Se acabo el mazo, todos pierden un punto de honor", type: :info }
+      handle_game_end
+      save
     end
   end
 
@@ -196,6 +224,23 @@ class Game < ApplicationRecord
     draw_cards(current_player, 1)
     current_player.resistance -= 1
     self.log << { player: current_player.user.username, message: "Nobunaga roba 1 carta adicional por 1 de daño", type: :info }
+    save
+  end
+
+  def shima_ability(character, property_name)
+    return if self.game_ended || !current_player.character.is_a?(Shima) || current_player.resistance <= 1
+    target = find_player_by_character(character)
+    index_of_card_to_steal = target.find_visible_card(property_name)
+    if target && index_of_card_to_steal
+      current_player.resistance -= 1
+      current_player.cards << target.visible_cards.delete_at(index_of_card_to_steal)
+      self.last_action = "Habilidad de Shima, robó #{current_player.cards.last.friendly_name} de #{target.user.username}"
+      self.log << { player: current_player.user.username, message: self.last_action, type: :info }
+    else
+      self.last_error = "Error, debe elegir un jugador a quien robar la carta" unless target
+      self.last_error = "Error, debe elegir una carta visible" unless index_of_card_to_steal
+      self.log << { player: current_player.user.username, message: self.last_error, type: :error }
+    end
     save
   end
 
@@ -239,7 +284,7 @@ class Game < ApplicationRecord
     self.players.detect { |p| p.character.to_s.downcase == character.to_s.downcase }
   end
 
-  def play_card(source_player, card_name, target_player, what_card)
+  def play_card(source_player, card_name, target_player, what_card, accepted=false)
     return if self.game_ended
     self.last_action = nil
     self.last_error = nil
@@ -263,15 +308,32 @@ class Game < ApplicationRecord
       end
       self.pending_answer = []
       self.discarded ||= []
-      self.wait_for_answer = true
-      self.pending_answer << target
-      self.last_action = "#{current_player.user.username} atacó a #{target.user.username} con #{card.friendly_name} - Daño base: #{card.damage + current_player.damage_modifier} - esperando respuesta de #{target.user.username}"
-      self.log << { player: current_player.user.username, message: self.last_action, type: :info }
-      self.target = target
-      self.discarded << current_player.cards.delete_at(card_index)
-      self.defend_from = card
+      damachacha_skips = false
+      if target.character.is_a?(Damachacha)
+        if self.deck.size > 1
+          discarded_cards = self.deck.slice!(0, 2)
+        else
+          discarded_cards = self.deck.slice!(0, 1)
+          handle_deck_zero
+          discarded_cards += self.deck.slice!(0, 1)
+        end
+        damachacha_skips = discarded_cards[0].symbol == discarded_cards[1].symbol
+        self.discarded += discarded_cards
+      end
+      unless damachacha_skips
+        self.wait_for_answer = true
+        self.pending_answer << target
+        self.last_action = "#{current_player.user.username} atacó a #{target.user.username} con #{card.friendly_name} - Daño base: #{card.damage + current_player.damage_modifier} - esperando respuesta de #{target.user.username}"
+        self.log << { player: current_player.user.username, message: self.last_action, type: :info }
+        self.target = target
+        self.discarded << current_player.cards.delete_at(card_index)
+        self.defend_from = card
+      else
+        self.last_action = "#{current_player.user.username} atacó a #{target.user.username} con #{card.friendly_name}, pero se descartaron dos cartas con mismo símbolo "
+        self.log << { player: current_player.user.username, message: self.last_action, type: :info }
+      end
       draw_cards(current_player, 1) if current_player.bokuden? && card.templo?
-      current_player.weapons_played += 1 unless card.additional_weapon?
+      current_player.weapons_played += 1 unless card.additional_weapon? || current_player.shingen? && card.monte?
       update(players: self.players)
       save
       handle_game_end
@@ -348,11 +410,17 @@ class Game < ApplicationRecord
         save
       when 'distraccion'
         if target && target.cards.any?
-          current_player.cards << target.cards.delete(target.cards.sample)
-          self.last_action = "Jugó Distracción, roba una carta al azar de la mano de #{target.user.username}"
-          self.log << { player: current_player.user.username, message: self.last_action, type: :info }
-          self.discarded << current_player.cards.delete_at(card_index)
-          handle_kote(card)
+          if target.okuni? && target.has_origami_cards? && !accepted
+            self.pending_answer = [target]
+            self.defend_from = card
+          else
+            self.pending_answer = []
+            current_player.cards << target.cards.delete(target.cards.sample)
+            self.last_action = "Jugó Distracción, roba una carta al azar de la mano de #{target.user.username}"
+            self.log << { player: current_player.user.username, message: self.last_action, type: :info }
+            self.discarded << current_player.cards.delete_at(card_index)
+            handle_kote(card)
+          end
         else
           self.last_error = "Error, debe elegir un jugador a quien robar la carta" unless target
           self.last_error = "Error, el jugador no posee cartas" unless target.cards.any?
@@ -361,19 +429,26 @@ class Game < ApplicationRecord
         save
       when 'geisha'
         if target && (what_card == 'from_hand' && target.cards.any? || what_card != 'from_hand')
-          self.discarded << current_player.cards.delete_at(card_index)
-          if what_card == 'from_hand'
-            self.discarded << target.cards.delete(target.cards.sample)
-            self.last_action = "Jugó Geisha, descartó (al azar) #{self.discarded.last.friendly_name} de la mano de #{target.user.username}"
+          if target.okuni? && target.has_origami_cards? && !accepted
+            card.what_card = what_card
+            self.pending_answer = [target]
+            self.defend_from = card
           else
-            self.discarded << target.visible_cards.delete_at(target.find_visible_card(what_card))
-            if self.discarded.last.bushido?
-              self.bushido_in_play = false
+            self.pending_answer = []
+            self.discarded << current_player.cards.delete_at(card_index)
+            if what_card == 'from_hand'
+              self.discarded << target.cards.delete(target.cards.sample)
+              self.last_action = "Jugó Geisha, descartó (al azar) #{self.discarded.last.friendly_name} de la mano de #{target.user.username}"
+            else
+              self.discarded << target.visible_cards.delete_at(target.find_visible_card(what_card))
+              if self.discarded.last.bushido?
+                self.bushido_in_play = false
+              end
+              self.last_action = "Jugó Geisha, descartó #{self.discarded.last.friendly_name} de #{target.user.username}"
             end
-            self.last_action = "Jugó Geisha, descartó #{self.discarded.last.friendly_name} de #{target.user.username}"
+            handle_kote(card)
+            self.log << { player: current_player.user.username, message: self.last_action, type: :info }
           end
-          handle_kote(card)
-          self.log << { player: current_player.user.username, message: self.last_action, type: :info }
         else
           self.last_error = "Error, debe elegir un jugador a quien robar la carta" unless target
           self.last_error = "Error, debe elegir un jugador con cartas" if what_card == 'from_hand' && target.cards.none?
@@ -381,22 +456,35 @@ class Game < ApplicationRecord
         end
         save
       when 'intuicion'
-        self.pending_answer = []
-        self.last_action = "Jugó Intuición, todos los demas deben ofrecer una carta para que #{current_player.user.username} elija"
-        self.log << { player: current_player.user.username, message: self.last_action, type: :info }
-        all_other_offensive_players.each do |p|
-          self.pending_answer << p
+        if all_other_offensive_players.size > 0
+          self.pending_answer = []
+          self.last_action = "Jugó Intuición, todos los demas deben ofrecer una carta para que #{current_player.user.username} elija"
+          self.log << { player: current_player.user.username, message: self.last_action, type: :info }
+          all_other_offensive_players.each do |p|
+            self.pending_answer << p
+          end
+          self.discarded << current_player.cards.delete_at(card_index)
+          self.defend_from = card
+        else
+          self.last_error = "Error, no hay jugadores ofensivos"
+          self.log << { player: current_player.user.username, message: self.last_error, type: :error }
         end
-        self.discarded << current_player.cards.delete_at(card_index)
-        self.defend_from = card
-        #handle_kote(card) Handle after selecting card
         save
       when 'imitacion'
         if target
-          self.discarded << current_player.cards.delete_at(card_index)
-          current_player.cards << target.visible_cards.delete_at(target.find_visible_card(what_card))
-          self.last_action = "Jugó Imitación, robó #{current_player.cards.last.friendly_name} de #{target.user.username}"
-          self.log << { player: current_player.user.username, message: self.last_action, type: :info }
+          if target.okuni? && target.has_origami_cards? && !accepted
+            card.what_card = what_card
+            self.pending_answer = [target]
+            self.defend_from = card
+            self.last_action = "Juega Imitación, para robar #{current_player.cards.last.friendly_name} de #{target.user.username}"
+            self.log << { player: current_player.user.username, message: self.last_action, type: :info }
+          else
+            self.pending_answer = []
+            self.discarded << current_player.cards.delete_at(card_index)
+            current_player.cards << target.visible_cards.delete_at(target.find_visible_card(what_card))
+            self.last_action = "Jugó Imitación, robó #{current_player.cards.last.friendly_name} de #{target.user.username}"
+            self.log << { player: current_player.user.username, message: self.last_action, type: :info }
+          end
         else
           self.last_error = "Error, debe elegir un jugador a quien robar la carta" unless target
           self.log << { player: current_player.user.username, message: self.last_error, type: :error }
@@ -410,11 +498,21 @@ class Game < ApplicationRecord
         save
       when 'ataque_simultaneo'
         if current_player.resistance > 1 && target && target.resistance > 1
-          current_player.resistance -= 1
-          target.resistance -= 1
-          self.last_action = "Jugó Ataque Simultáneo, pierde uno de resistencia y #{target.user.username} también"
-          self.log << { player: current_player.user.username, message: self.last_action, type: :info }
-          self.discarded << current_player.cards.delete_at(card_index)
+          if target.okuni? && target.has_origami_cards? && !accepted
+            card.what_card = what_card
+            self.pending_answer = [target]
+            self.defend_from = card
+            self.last_action = "Juega Imitación, para robar #{current_player.cards.last.friendly_name} de #{target.user.username}"
+            self.log << { player: current_player.user.username, message: self.last_action, type: :info }
+          else
+            self.pending_answer = []
+            current_player.resistance -= 1
+            target.resistance -= 1
+            self.last_action = "Jugó Ataque Simultáneo, pierde uno de resistencia y #{target.user.username} también"
+            self.log << { player: current_player.user.username, message: self.last_action, type: :info }
+            self.discarded << current_player.cards.delete_at(card_index)
+            handle_action_after_damage(current_player, target, card)
+          end
           save
         else
           self.last_error = "Error, debes tener al menos 2 puntos de resistencia" unless current_player.resistance > 1
@@ -444,6 +542,7 @@ class Game < ApplicationRecord
       self.last_action = "#{player_to_receive_damage.user.username} recibe #{defend_from.damage - campesino_damage_modifier + current_player.damage_modifier(defend_from)} de daño por #{defend_from.friendly_name}"
       self.log << { player: current_player.user.username, message: self.last_action, type: :info }
       if player_to_receive_damage.take_simple_damage(defend_from.damage - campesino_damage_modifier, origin_player)
+        handle_action_after_damage(origin_player, player_to_receive_damage, defend_from)
         if current_player.resistance.zero?
           self.log << { player: current_player.user.username, message: 'Pierde ultima resistencia por contrataque, finaliza turno', type: :info }
           next_phase
@@ -468,19 +567,16 @@ class Game < ApplicationRecord
   end
 
   def handle_action_after_damage(current_player, damaged_player, defend_from)
-    case
-    when current_player.draw_card_after_making_damage?(defend_from.type)
-      draw_cards(current_player, 1)
-    when damaged_player.draw_card_after_receiving_damage?(defend_from.type)
-      draw_cards(damaged_player, 1)
-    when defend_from.return_card?
-      current_player.cards << self.discarded.delete_at(discarded.size - 1)
-    when defend_from.discard_if_damaged?
+    draw_cards(current_player, 1) if current_player.draw_card_after_making_damage?(defend_from.type)
+    draw_cards(damaged_player, 1) if damaged_player.draw_card_after_receiving_damage?(defend_from.type)
+    current_player.cards << self.discarded.delete_at(discarded.size - 1) if defend_from.return_card?
+    if defend_from.discard_if_damaged?
       self.last_action = "#{damaged_player.user.username} recibe #{defend_from.damage + current_player.damage_modifier(defend_from)} de daño por #{defend_from.friendly_name} - Ahora debe descartar una carta a elección."
       self.log << { player: current_player.user.username, message: self.last_action, type: :info }
       self.pending_answer << damaged_player
       self.defend_from.already_damaged = true
-    when damaged_player.has_maldicion?
+    end
+    if damaged_player.has_maldicion?
       if damaged_player.resistance.zero?
         if damaged_player.has_bushido?
           self.bushido_in_play = false
@@ -489,6 +585,27 @@ class Game < ApplicationRecord
         self.discarded += damaged_player.visible_cards
         damaged_player.visible_cards = []
       end
+    end
+    if damaged_player.yukimura?
+      reveal_card = self.deck.delete_at(0)
+      handle_deck_zero
+      return if self.game_ended
+      self.discarded << reveal_card
+      if reveal_card.origami?
+        current_player.take_simple_damage(1, damaged_player)
+        self.log << { player: current_player.user.username, message: "Salio origami resolviendo habilidad de Yukimura, #{current_player.user.username} recibe 1 de daño.", type: :info }
+      else
+        self.log << { player: current_player.user.username, message: "No salió origami resolviendo habilidad de Yukimura.", type: :info }
+      end
+    end
+    if damaged_player.resistance.zero?
+      if self.players.collect(&:character).any?(Motonari)
+        self.players.each do |p|
+          draw_cards(p, 1) if p.character.is_a?(Motonari)
+        end
+      end
+      discard_cards(damaged_player.initial_resistance)
+      self.log << { player: current_player.user.username, message: "Discarded cards because #{damaged_player.user.username} lost all resistance", type: :info }
     end
     save
   end
@@ -535,9 +652,8 @@ class Game < ApplicationRecord
   end
 
   def respond_weapon(character, weapon_name)
-    index = pending_answer.index { |c| c.character.to_s.downcase == character.downcase  }
-    target = pending_answer.delete_at index
-    target = find_player_by_character(target.character)
+    pending_answer.delete_at(pending_answer.index { |c| c.character.to_s.downcase == character.downcase })
+    target = find_player_by_character(character)
     if pending_answer.blank?
       self.pending_answer = nil
       self.wait_for_answer = false
@@ -552,7 +668,7 @@ class Game < ApplicationRecord
   def hanzo_ability(character, weapon_name)
     raise "Error, no eres hanzo" unless character == 'hanzo'
     index = pending_answer.index { |c| c.character.to_s.downcase == character.downcase  }
-    target = pending_answer.delete_at index
+    pending_answer.delete_at index
     target = find_player_by_character(target.character)
     if pending_answer.blank?
       self.pending_answer = nil
@@ -561,6 +677,48 @@ class Game < ApplicationRecord
     self.last_action = "#{target.user.username} descarto un arma, #{weapon_name.to_s.humanize}, como parada"
     self.log << { player: current_player.user.username, message: self.last_action, type: :info }
     self.discarded << target.discard_card(weapon_name)
+    save
+  end
+
+  def kanbei_ability(character, card_name)
+    raise "Error, no eres kanbei" unless character == 'kanbei'
+    target = find_player_by_character(character)
+    discarded_card = target.discard_visible_card(card_name)
+    if discarded_card
+      pending_answer.delete_at(pending_answer.index { |c| c.character.to_s.downcase == character.downcase  })
+      if pending_answer.blank?
+        self.pending_answer = nil
+        self.wait_for_answer = false
+      end
+      self.bushido_in_play = false if discarded_card.bushido?
+      self.last_action = "#{target.user.username} descarto una propiedad, #{card_name.to_s.humanize}, como parada"
+      self.log << { player: current_player.user.username, message: self.last_action, type: :info }
+      self.discarded << discarded_card
+    else
+      self.last_error = "#{target.user.username} intentó descartar, #{card_name.to_s.humanize}, como parada"
+      self.log << { player: current_player.user.username, message: self.last_error, type: :error }
+    end
+    save
+  end
+
+  def okuni_ability(character, card_name)
+    raise "Error, no eres Okuni" unless character == 'okuni'
+    target = find_player_by_character(character)
+    discarded_card = target.discard_origami_card(card_name)
+    if discarded_card
+      self.discarded << current_player.discard_card(self.defend_from.name)
+      pending_answer.delete_at(pending_answer.index { |c| c.character.to_s.downcase == character.downcase  })
+      if pending_answer.blank?
+        self.pending_answer = nil
+        self.wait_for_answer = false
+      end
+      self.last_action = "#{target.user.username} descarto una carta origami, #{card_name.to_s.humanize}, para anular la accion de #{self.defend_from.name.to_s.humanize}"
+      self.log << { player: current_player.user.username, message: self.last_action, type: :info }
+      self.discarded << discarded_card
+    else
+      self.last_error = "#{target.user.username} intentó descartar, #{card_name.to_s.humanize}, para anular la accion de #{self.defend_from.name.to_s.humanize}"
+      self.log << { player: current_player.user.username, message: self.last_error, type: :error }
+    end
     save
   end
 
@@ -577,6 +735,18 @@ class Game < ApplicationRecord
   def handle_bushido
     if current_player.has_bushido?
       bushido_action_card = self.deck.delete_at(0)
+      handle_deck_zero
+      if current_player.masamune? && bushido_action_card.weapon?
+        self.discarded << bushido_action_card
+        bushido_action_card = self.deck.delete_at(0)
+        handle_deck_zero
+      end
+      if current_player.masamune? && bushido_action_card.weapon?
+        self.discarded << bushido_action_card
+        bushido_action_card = self.deck.delete_at(0)
+        handle_deck_zero
+      end
+      return if self.game_ended
       self.discarded << bushido_action_card
       if bushido_action_card.weapon?
         if current_player.has_weapon?
@@ -598,20 +768,38 @@ class Game < ApplicationRecord
   end
 
   def handle_herida_sangrante
-    if current_player.has_herida_sangrante? && current_player.resistance > 1
-      reveal_card = self.deck.delete_at(0)
-      self.discarded << reveal_card
-      if reveal_card.origami?
-        if current_player.has_campesinos?
-          self.log << { player: current_player.user.username, message: "Salio origami con Herida Sangrante, dando opcion a jugador de utilizar campesino.", type: :info }
-          self.pending_answer = [current_player]
-          self.defend_from = current_player.find_herida_sangrante
-        else
-          current_player.resistance -= 1
-          self.log << { player: current_player.user.username, message: "Herida Sangrante - Salio origami, pierde uno de resistencia", type: :info }
+    if current_player.has_herida_sangrante?
+      current_player.visible_cards.select { |c| c.name == :herida_sangrante }.size.times do
+        reveal_card = self.deck.delete_at(0)
+        handle_deck_zero
+        if current_player.masamune? && !reveal_card.origami?
+          self.discarded << reveal_card
+          reveal_card = self.deck.delete_at(0)
+          handle_deck_zero
         end
-      else
-        self.log << { player: current_player.user.username, message: "Herida Sangrante - No salio origami", type: :info }
+        if current_player.masamune? && !reveal_card.origami?
+          self.discarded << reveal_card
+          reveal_card = self.deck.delete_at(0)
+          handle_deck_zero
+        end
+        return if self.game_ended
+        self.discarded << reveal_card
+        if reveal_card.origami?
+          if current_player.resistance > 1
+            if current_player.has_campesinos?
+              self.log << { player: current_player.user.username, message: "Salio origami con Herida Sangrante, dando opcion a jugador de utilizar campesino.", type: :info }
+              self.pending_answer = [current_player]
+              self.defend_from = current_player.find_herida_sangrante
+            else
+              current_player.resistance -= 1
+              self.log << { player: current_player.user.username, message: "Herida Sangrante - Salio origami, pierde uno de resistencia", type: :info }
+            end
+          else
+            self.log << { player: current_player.user.username, message: "Herida Sangrante - Salio origami, pero solo tiene 1 de resistencia", type: :info }
+          end
+        else
+          self.log << { player: current_player.user.username, message: "Herida Sangrante - No salio origami", type: :info }
+        end
       end
       save
     end
